@@ -1,26 +1,158 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Surfaces */
+  --background: #f8f9fa;
+  --surface: #ffffff;
+  --surface-elevated: #f1f3f5;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Text — bright and readable */
+  --foreground: #111827;
+  --foreground-secondary: #4b5563;
+  --foreground-tertiary: #6b7280;
+
+  /* Accent */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-light: #eff6ff;
+
+  /* User bubble — blueish */
+  --user-bubble: #dbeafe;
+  --user-bubble-text: #ffffff;
+
+  /* Interactive */
+  --hover: #f1f3f5;
+  --active: #e9ecef;
+  --focus-ring: #93c5fd;
+
+  /* Borders */
+  --border-separator: #e5e7eb;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
+
+  /* Status */
+  --error: #dc2626;
+  --error-bg: #fef2f2;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0f0f11;
+    --surface: #1a1a1e;
+    --surface-elevated: #252529;
+
+    --foreground: #f3f4f6;
+    --foreground-secondary: #c9cdd4;
+    --foreground-tertiary: #9ca3af;
+
+    --accent: #3b82f6;
+    --accent-hover: #60a5fa;
+    --accent-light: #1e3a5f;
+
+    --user-bubble: #1e3a5f;
+    --user-bubble-text: #ffffff;
+
+    --hover: #26262b;
+    --active: #313137;
+    --focus-ring: #60a5fa;
+
+    --border-separator: #2a2a30;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
+
+    --error: #ef4444;
+    --error-bg: #1c1010;
   }
 }
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border: transparent;
+  --color-border-subtle: transparent;
+  --color-border-separator: var(--border-separator);
+
+  --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-foreground-tertiary: var(--foreground-tertiary);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-light: var(--accent-light);
+
+  --color-user-bubble: var(--user-bubble);
+  --color-user-bubble-text: var(--user-bubble-text);
+
+  --color-hover: var(--hover);
+  --color-active: var(--active);
+  --color-focus-ring: var(--focus-ring);
+
+  --color-error: var(--error);
+  --color-error-bg: var(--error-bg);
+
+  --color-shadow-sm: var(--shadow-sm);
+  --color-shadow-md: var(--shadow-md);
+  --color-shadow-lg: var(--shadow-lg);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Base styles */
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus ring utility */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--active);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground-tertiary);
+}
+
+/* Textarea scrollbar — thin and subtle */
+.chat-input-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.chat-input-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-input-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--foreground-tertiary);
+  border-radius: 100px;
+}
+.chat-input-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground-secondary);
+}
+.chat-input-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--foreground-tertiary) transparent;
 }

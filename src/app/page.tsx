@@ -1,83 +1,93 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { AppShell } from "@/components/app-shell";
+import { MessageList, type MessageData } from "@/components/message-list";
+import { ChatInput } from "@/components/chat-input";
+
+const mockConversations = [
+  { id: "1", title: "Welcome chat", active: true },
+  { id: "2", title: "Comparing LLM providers" },
+  { id: "3", title: "Free tier options" },
+];
+
+const mockMessages: MessageData[] = [
+  {
+    id: "1",
+    role: "user",
+    content: "What are the best free AI providers right now?",
+  },
+  {
+    id: "2",
+    role: "assistant",
+    content:
+      "Here are some of the best free AI providers available:\n\n1. Google Gemini — Generous free tier with access to Gemini models\n2. Groq — Fast inference with free tier for several models\n3. OpenRouter — Aggregator with some free models available\n\nEach has different rate limits and model selections. Would you like me to go deeper into any of these?",
+  },
+  {
+    id: "3",
+    role: "user",
+    content: "Tell me more about Groq's free tier.",
+  },
+  {
+    id: "4",
+    role: "assistant",
+    content:
+      "Groq offers free API access with very fast inference speeds. Their free tier includes:\n\n- Access to Llama 3 and Mixtral models\n- Fast response times (often under 1 second)\n- Rate limits that are generous for personal use\n- Simple API that's compatible with OpenAI's format\n\nThe main limitation is request volume, but for a chat application it's usually sufficient.",
+  },
+];
 
 export default function Home() {
-  return (
-    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-sans sm:p-20">
-      <main className="row-start-2 flex flex-col items-center gap-[32px] sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-center font-mono text-sm/6 sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="rounded bg-black/[.05] px-1 py-0.5 font-mono font-semibold dark:bg-white/[.06]">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">Save and see your changes instantly.</li>
-        </ol>
+  const [conversations] = useState(mockConversations);
+  const [messages, setMessages] = useState<MessageData[]>(mockMessages);
+  const [isLoading, setIsLoading] = useState(false);
 
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <a
-            className="bg-foreground text-background flex h-10 items-center justify-center gap-2 rounded-full border border-solid border-transparent px-4 text-sm font-medium transition-colors hover:bg-[#383838] sm:h-12 sm:w-auto sm:px-5 sm:text-base dark:hover:bg-[#ccc]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="flex h-10 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm font-medium transition-colors hover:border-transparent hover:bg-[#f2f2f2] sm:h-12 sm:w-auto sm:px-5 sm:text-base md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  function handleSend(message: string) {
+    const userMsg: MessageData = {
+      id: Date.now().toString(),
+      role: "user",
+      content: message,
+    };
+    setMessages((prev) => [...prev, userMsg]);
+
+    setIsLoading(true);
+    setTimeout(() => {
+      const assistantMsg: MessageData = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: `This is a mock response to: "${message}"\n\nAI provider integration will be added in a later phase. For now, this demonstrates the chat UI.`,
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+      setIsLoading(false);
+    }, 1500);
+  }
+
+  return (
+    <AppShell
+      conversations={conversations}
+      onNewChat={() => {
+        setMessages([]);
+      }}
+      onSelectConversation={(id) => {
+        console.log("Selected conversation:", id);
+      }}
+    >
+      {messages.length === 0 ? (
+        /* Empty state — centered greeting + input */
+        <div className="flex flex-1 flex-col items-center justify-center px-4">
+          <h2 className="mb-2 text-lg font-medium text-foreground">
+            Hi, how can I help you today?
+          </h2>
+          <p className="mb-8 text-sm text-foreground-secondary">Ask me anything.</p>
+          <div className="w-full max-w-2xl">
+            <ChatInput onSend={handleSend} disabled={isLoading} />
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex flex-wrap items-center justify-center gap-[24px]">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/file.svg" alt="File icon" width={16} height={16} />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/window.svg" alt="Window icon" width={16} height={16} />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/globe.svg" alt="Globe icon" width={16} height={16} />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      ) : (
+        <>
+          <MessageList messages={messages} isLoading={isLoading} />
+          <ChatInput onSend={handleSend} disabled={isLoading} />
+        </>
+      )}
+    </AppShell>
   );
 }
