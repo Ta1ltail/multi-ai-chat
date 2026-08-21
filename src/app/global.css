@@ -27,6 +27,7 @@
 
   /* Borders */
   --border-separator: #e5e7eb;
+  --border-input: #d1d5db;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -60,6 +61,7 @@
     --focus-ring: #60a5fa;
 
     --border-separator: #2a2a30;
+    --border-input: #3a3a40;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -77,6 +79,7 @@
   --color-border: transparent;
   --color-border-subtle: transparent;
   --color-border-separator: var(--border-separator);
+  --color-border-input: var(--border-input);
 
   --color-foreground: var(--foreground);
   --color-foreground-secondary: var(--foreground-secondary);
@@ -106,7 +109,10 @@
 
 /* Base styles */
 
+html,
 body {
+  height: 100%;
+  overflow: hidden;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
@@ -121,6 +127,21 @@ body {
 .focus-ring:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* Message entrance animation */
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.message-animate-in {
+  animation: message-in 0.2s ease-out both;
 }
 
 /* Scrollbar styling */

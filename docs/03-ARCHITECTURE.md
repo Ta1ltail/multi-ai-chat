@@ -7,7 +7,12 @@ User
   ↓
 Next.js UI (App Router)
   ↓
-Page Components
+AppShell (sidebar + main area)
+  ↓
+Page Components (page.tsx)
+  ├── MessageList — scrollable message container
+  ├── ChatInput — auto-resizing textarea
+  └── Message — individual message bubbles
 ```
 
 ## Target Architecture
@@ -51,3 +56,19 @@ User → Chat UI → API Route → Router (best provider) → Fallback chain
 - **Provider abstraction** — easy to add new providers without changing UI
 - **Fallback chain** — automatic retry with next provider on failure
 - **Free-tier first** — default to free models, upgrade optional
+- **Overflow containment** — layered `overflow: hidden` prevents page-level scrolling
+- **Smart auto-scroll** — only auto-scrolls when user is near bottom
+
+## Component Hierarchy
+
+```
+RootLayout (layout.tsx)
+  └── Home (page.tsx)
+        └── AppShell (app-shell.tsx)
+              ├── Sidebar (sidebar.tsx)
+              │     └── Button (button.tsx)
+              └── <main>
+                    ├── MessageList (message-list.tsx)
+                    │     └── Message (message.tsx)
+                    └── ChatInput (chat-input.tsx)
+```

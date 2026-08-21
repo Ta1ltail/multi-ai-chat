@@ -6,13 +6,16 @@
 - **Tasks:** Next.js, TypeScript, Tailwind, ESLint, Prettier, docs
 - **Done when:** Dev server runs, lint passes, build succeeds
 
-## Phase 1 — Basic Chat UI
+## Phase 1 — Basic Chat UI ✅
 
 - **Goal:** Working chat interface (no AI yet)
 - **Tasks:**
-  - Message input component
-  - Chat message display
-  - Basic layout and styling
+  - ChatInput component with auto-resizing textarea
+  - Message component (user bubbles, assistant text, loading dots)
+  - MessageList with smart auto-scroll
+  - AppShell layout with collapsible sidebar
+  - Dark mode support
+  - Message entrance animations
 - **Done when:** User can type and see messages in a clean UI
 
 ## Phase 2 — Single AI Provider

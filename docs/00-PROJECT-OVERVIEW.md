@@ -16,16 +16,23 @@ Build a single chat interface where users can:
 - Next.js project foundation with TypeScript, Tailwind CSS, ESLint
 - App Router structure
 - Clean, scalable folder layout
+- Chat UI with auto-resizing textarea
+- Message display (user bubbles, assistant text, loading indicator)
+- Smart auto-scroll with manual scroll detection
+- Collapsible sidebar with conversation list
+- Dark mode support
+- Responsive layout with overflow containment
 
 ## What's NOT Included Yet
 
 - No AI provider integration
-- No chat UI
-- No conversation storage
+- No conversation storage/persistence
 - No authentication
 - No database
-- No model selection
+- No model selection UI
 - No provider routing or fallback
+- No error handling/retry logic
+- No tests
 
 ## Core Principles
 
