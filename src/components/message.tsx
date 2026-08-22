@@ -92,7 +92,16 @@ export function Message({ role, content, loading }: MessageProps) {
   // flow — no hover-triggered show/hide, so nothing reflows when it
   // appears. Alignment (left for assistant, right for user) comes from the
   // flex-col items-start/items-end wrapper below.
-  const copyButton = content && (
+  //
+  // Assistant replies that contain a code block already get a copy button
+  // directly under each block (see lib/markdown.ts). Showing the
+  // whole-message button too, right underneath that, reads as a duplicate
+  // — especially when the code block is the last thing in the reply — so
+  // it's suppressed whenever the content has at least one fenced block.
+  const hasCodeBlock = !isUser && /```[\s\S]*?```/.test(content);
+  const showMessageCopy = Boolean(content) && !hasCodeBlock;
+
+  const copyButton = showMessageCopy ? (
     <button
       onClick={handleCopyMessage}
       className="focus-ring text-foreground-tertiary hover:text-foreground hover:bg-hover flex h-7 w-7 items-center justify-center rounded-md transition-colors"
@@ -127,7 +136,7 @@ export function Message({ role, content, loading }: MessageProps) {
         </svg>
       )}
     </button>
-  );
+  ) : null;
 
   if (isUser) {
     return (
@@ -135,7 +144,7 @@ export function Message({ role, content, loading }: MessageProps) {
         <div className="bg-user-bubble text-user-bubble-text max-w-[80%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed shadow-sm md:max-w-[65%]">
           <p className="wrap-break-word whitespace-pre-wrap">{content}</p>
         </div>
-        <div className="mt-1">{copyButton}</div>
+        {copyButton && <div className="mt-1">{copyButton}</div>}
       </div>
     );
   }
@@ -147,7 +156,7 @@ export function Message({ role, content, loading }: MessageProps) {
         className="text-foreground w-full min-w-0 text-[15px] leading-relaxed"
         dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
       />
-      <div className="mt-1">{copyButton}</div>
+      {copyButton && <div className="mt-1">{copyButton}</div>}
     </div>
   );
 }
