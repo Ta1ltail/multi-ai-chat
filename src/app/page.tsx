@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { AppShell } from "@/components/app-shell";
 import { MessageList, type MessageData } from "@/components/message-list";
 import { ChatInput } from "@/components/chat-input";
+import { Toast } from "@/components/toast";
 
 const mockConversations = [
   { id: "1", title: "Welcome chat", active: true },
@@ -11,55 +12,115 @@ const mockConversations = [
   { id: "3", title: "Free tier options" },
 ];
 
-const mockMessages: MessageData[] = [
-  {
-    id: "1",
-    role: "user",
-    content: "What are the best free AI providers right now?",
-  },
-  {
-    id: "2",
-    role: "assistant",
-    content:
-      "Here are some of the best free AI providers available:\n\n1. Google Gemini — Generous free tier with access to Gemini models\n2. Groq — Fast inference with free tier for several models\n3. OpenRouter — Aggregator with some free models available\n\nEach has different rate limits and model selections. Would you like me to go deeper into any of these?",
-  },
-  {
-    id: "3",
-    role: "user",
-    content: "Tell me more about Groq's free tier.",
-  },
-  {
-    id: "4",
-    role: "assistant",
-    content:
-      "Groq offers free API access with very fast inference speeds. Their free tier includes:\n\n- Access to Llama 3 and Mixtral models\n- Fast response times (often under 1 second)\n- Rate limits that are generous for personal use\n- Simple API that's compatible with OpenAI's format\n\nThe main limitation is request volume, but for a chat application it's usually sufficient.",
-  },
-];
+const initialMessages: MessageData[] = [];
+
+interface ToastState {
+  id: number;
+  message: string;
+  type: "error" | "success" | "info";
+}
 
 export default function Home() {
   const [conversations] = useState(mockConversations);
-  const [messages, setMessages] = useState<MessageData[]>(mockMessages);
+  const [messages, setMessages] = useState<MessageData[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
+  const [toasts, setToasts] = useState<ToastState[]>([]);
 
-  function handleSend(message: string) {
-    const userMsg: MessageData = {
-      id: Date.now().toString(),
-      role: "user",
-      content: message,
-    };
-    setMessages((prev) => [...prev, userMsg]);
+  const addToast = useCallback((message: string, type: ToastState["type"] = "error") => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+  }, []);
 
-    setIsLoading(true);
-    setTimeout(() => {
-      const assistantMsg: MessageData = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: `This is a mock response to: "${message}"\n\nAI provider integration will be added in a later phase. For now, this demonstrates the chat UI.`,
+  const removeToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const handleSend = useCallback(
+    async (content: string) => {
+      const userMsg: MessageData = {
+        id: Date.now().toString(),
+        role: "user",
+        content,
       };
-      setMessages((prev) => [...prev, assistantMsg]);
-      setIsLoading(false);
-    }, 1500);
-  }
+
+      const assistantId = (Date.now() + 1).toString();
+      const assistantMsg: MessageData = {
+        id: assistantId,
+        role: "assistant",
+        content: "",
+      };
+
+      setMessages((prev) => [...prev, userMsg, assistantMsg]);
+      setIsLoading(true);
+
+      try {
+        const apiMessages = [...messages, userMsg].map((m) => ({
+          role: (m.role === "assistant" ? "model" : m.role) as "user" | "model",
+          parts: m.content,
+        }));
+
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: apiMessages }),
+        });
+
+        if (!res.ok) {
+          throw new Error(`API error: ${res.status}`);
+        }
+
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error("No reader available");
+
+        const decoder = new TextDecoder();
+        let fullText = "";
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6);
+              if (data === "[DONE]") continue;
+
+              try {
+                const parsed = JSON.parse(data) as { text?: string; error?: string };
+                if (parsed.error) throw new Error(parsed.error);
+                if (parsed.text) {
+                  fullText += parsed.text;
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantId ? { ...m, content: fullText } : m,
+                    ),
+                  );
+                }
+              } catch {
+                // Skip malformed JSON lines
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Chat error:", error);
+        const errorMsg = error instanceof Error ? error.message : "Failed to get response";
+        addToast(errorMsg);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId ? { ...m, content: `Error: ${errorMsg}` } : m,
+          ),
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [messages, addToast],
+  );
 
   return (
     <AppShell
@@ -88,6 +149,16 @@ export default function Home() {
           <ChatInput onSend={handleSend} disabled={isLoading} />
         </>
       )}
+
+      {/* Toast notifications */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
     </AppShell>
   );
 }

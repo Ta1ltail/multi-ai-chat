@@ -41,6 +41,13 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
     }
   }, [messages, isLoading]);
 
+  // Scroll to bottom on initial load
+  useEffect(() => {
+    if (messages.length > 0 && messages[0].content) {
+      bottomRef.current?.scrollIntoView({ behavior: "instant" });
+    }
+  }, []);
+
   return (
     <div
       ref={scrollRef}

@@ -18,7 +18,9 @@
 
   /* User bubble — blueish */
   --user-bubble: #dbeafe;
-  --user-bubble-text: #ffffff;
+  /* Was #ffffff — white on this very light blue was effectively
+     invisible. Dark navy keeps the same "blueish" feel and reads clearly. */
+  --user-bubble-text: #1e3a8a;
 
   /* Interactive */
   --hover: #f1f3f5;
@@ -29,10 +31,12 @@
   --border-separator: #e5e7eb;
   --border-input: #d1d5db;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
+  /* Shadows — named *-value so the @theme keys below (which generate the
+     real shadow-sm/md/lg utilities) don't share a name with these and
+     become circular. */
+  --shadow-value-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-value-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-value-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
 
   /* Status */
   --error: #dc2626;
@@ -63,9 +67,9 @@
     --border-separator: #2a2a30;
     --border-input: #3a3a40;
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-value-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-value-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-value-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
 
     --error: #ef4444;
     --error-bg: #1c1010;
@@ -99,9 +103,14 @@
   --color-error: var(--error);
   --color-error-bg: var(--error-bg);
 
-  --color-shadow-sm: var(--shadow-sm);
-  --color-shadow-md: var(--shadow-md);
-  --color-shadow-lg: var(--shadow-lg);
+  /* Was --color-shadow-sm/md/lg — the "color-" prefix makes Tailwind v4
+     generate color utilities (bg-shadow-sm, text-shadow-sm, ...), not
+     box-shadow ones. Using the bare --shadow-* prefix generates the real
+     shadow-sm / shadow-md / shadow-lg box-shadow utilities. Components
+     should use those names directly (shadow-sm, not shadow-shadow-sm). */
+  --shadow-sm: var(--shadow-value-sm);
+  --shadow-md: var(--shadow-value-md);
+  --shadow-lg: var(--shadow-value-lg);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -176,4 +185,106 @@ body {
 .chat-input-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--foreground-tertiary) transparent;
+}
+
+/* Syntax highlighting — Light mode */
+.hljs-comment {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.hljs-string {
+  color: #059669;
+}
+
+.hljs-keyword {
+  color: #7c3aed;
+  font-weight: 500;
+}
+
+.hljs-number {
+  color: #d97706;
+}
+
+.hljs-type {
+  color: #2563eb;
+}
+
+.hljs-variable {
+  color: #dc2626;
+}
+
+.hljs-decorator {
+  color: #d97706;
+}
+
+.hljs-tag {
+  color: #dc2626;
+}
+
+.hljs-attribute {
+  color: #7c3aed;
+}
+
+.hljs-key {
+  color: #2563eb;
+}
+
+.hljs-arrow {
+  color: #6b7280;
+}
+
+.hljs-operator {
+  color: #6b7280;
+}
+
+/* Syntax highlighting — Dark mode */
+@media (prefers-color-scheme: dark) {
+  .hljs-comment {
+    color: #6b7280;
+  }
+
+  .hljs-string {
+    color: #34d399;
+  }
+
+  .hljs-keyword {
+    color: #a78bfa;
+  }
+
+  .hljs-number {
+    color: #fbbf24;
+  }
+
+  .hljs-type {
+    color: #60a5fa;
+  }
+
+  .hljs-variable {
+    color: #f87171;
+  }
+
+  .hljs-decorator {
+    color: #fbbf24;
+  }
+
+  .hljs-tag {
+    color: #f87171;
+  }
+
+  .hljs-attribute {
+    color: #a78bfa;
+  }
+
+  .hljs-key {
+    color: #60a5fa;
+  }
+
+  .hljs-arrow {
+    color: #9ca3af;
+  }
+
+  .hljs-operator {
+    color: #9ca3af;
+  }
 }

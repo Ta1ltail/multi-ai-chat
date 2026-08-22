@@ -57,7 +57,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   return (
     <div className="shrink-0 px-4 py-4 md:px-5">
       <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
-        <div className="bg-surface border-border-input shadow-shadow-md focus-within:border-accent focus-within:shadow-shadow-lg flex items-end gap-2 rounded-2xl border py-2 pl-4 pr-3 transition-colors">
+        <div className="bg-surface border-border-input focus-within:border-accent flex items-end gap-2 rounded-2xl border py-2 pr-3 pl-4 shadow-md transition-colors focus-within:shadow-lg">
           <textarea
             ref={textareaRef}
             value={value}
