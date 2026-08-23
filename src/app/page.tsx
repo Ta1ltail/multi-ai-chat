@@ -7,6 +7,7 @@ import { ChatInput } from "@/components/chat-input";
 import { ModelSelector } from "@/components/model-selector";
 import { Toast } from "@/components/toast";
 import { getDefaultModel, getModelById } from "@/lib/ai";
+import { useTheme } from "@/lib/use-theme";
 
 interface Conversation {
   id: string;
@@ -34,6 +35,7 @@ function generateTitle(firstMessage: string): string {
 }
 
 export default function Home() {
+  const { theme, toggleTheme } = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -220,6 +222,8 @@ export default function Home() {
       onNewChat={handleNewChat}
       onSelectConversation={handleSelectConversation}
       onDeleteConversation={handleDeleteConversation}
+      theme={theme}
+      onToggleTheme={toggleTheme}
     >
       {messages.length === 0 ? (
         /* Empty state — centered greeting + input */

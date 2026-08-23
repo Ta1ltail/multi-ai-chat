@@ -9,6 +9,8 @@ interface AppShellProps {
   onNewChat: () => void;
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
+  theme: "light" | "dark";
+  onToggleTheme: () => void;
 }
 
 export function AppShell({
@@ -17,6 +19,8 @@ export function AppShell({
   onNewChat,
   onSelectConversation,
   onDeleteConversation,
+  theme,
+  onToggleTheme,
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -40,6 +44,8 @@ export function AppShell({
             }}
             onDeleteConversation={onDeleteConversation}
             onToggle={() => setSidebarOpen(false)}
+            theme={theme}
+            onToggleTheme={onToggleTheme}
           />
         </div>
       </div>

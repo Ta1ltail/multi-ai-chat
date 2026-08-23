@@ -39,45 +39,44 @@
   --error-bg: #fef2f2;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Surfaces — distinct layers, not pure black */
-    --background: #111318;
-    --surface: #1a1c22;
-    --surface-elevated: #22252c;
+/* Dark mode — activated by .dark class on <html> */
+html.dark {
+  /* Surfaces — distinct layers, not pure black */
+  --background: #111318;
+  --surface: #1a1c22;
+  --surface-elevated: #22252c;
 
-    /* Text — clear hierarchy */
-    --foreground: #e8eaed;
-    --foreground-secondary: #adb3bc;
-    --foreground-tertiary: #7a8290;
+  /* Text — clear hierarchy */
+  --foreground: #e8eaed;
+  --foreground-secondary: #adb3bc;
+  --foreground-tertiary: #7a8290;
 
-    /* Accent — brighter for dark backgrounds */
-    --accent: #3b82f6;
-    --accent-hover: #60a5fa;
-    --accent-light: #1a2744;
+  /* Accent — brighter for dark backgrounds */
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-light: #1a2744;
 
-    /* User bubble */
-    --user-bubble: #1a2744;
-    --user-bubble-text: #c8ddf8;
+  /* User bubble */
+  --user-bubble: #1a2744;
+  --user-bubble-text: #c8ddf8;
 
-    /* Interactive states */
-    --hover: #252830;
-    --active: #2e3139;
-    --focus-ring: #60a5fa;
+  /* Interactive states */
+  --hover: #252830;
+  --active: #2e3139;
+  --focus-ring: #60a5fa;
 
-    /* Borders — subtle separation */
-    --border-separator: #2a2d35;
-    --border-input: #3a3d45;
+  /* Borders — subtle separation */
+  --border-separator: #2a2d35;
+  --border-input: #3a3d45;
 
-    /* Shadows */
-    --shadow-value-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-value-md: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-value-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
+  /* Shadows */
+  --shadow-value-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-value-md: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-value-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
 
-    /* Status */
-    --error: #ef4444;
-    --error-bg: #2a1418;
-  }
+  /* Status */
+  --error: #ef4444;
+  --error-bg: #2a1418;
 }
 
 @theme inline {
@@ -260,52 +259,50 @@ body {
 
 /* ─── Syntax highlighting — Dark mode ──────────────── */
 
-@media (prefers-color-scheme: dark) {
-  .hljs-comment {
-    color: #7a8290;
-  }
+html.dark .hljs-comment {
+  color: #7a8290;
+}
 
-  .hljs-string {
-    color: #34d399;
-  }
+html.dark .hljs-string {
+  color: #34d399;
+}
 
-  .hljs-keyword {
-    color: #a78bfa;
-  }
+html.dark .hljs-keyword {
+  color: #a78bfa;
+}
 
-  .hljs-number {
-    color: #fbbf24;
-  }
+html.dark .hljs-number {
+  color: #fbbf24;
+}
 
-  .hljs-type {
-    color: #60a5fa;
-  }
+html.dark .hljs-type {
+  color: #60a5fa;
+}
 
-  .hljs-variable {
-    color: #f87171;
-  }
+html.dark .hljs-variable {
+  color: #f87171;
+}
 
-  .hljs-decorator {
-    color: #fbbf24;
-  }
+html.dark .hljs-decorator {
+  color: #fbbf24;
+}
 
-  .hljs-tag {
-    color: #f87171;
-  }
+html.dark .hljs-tag {
+  color: #f87171;
+}
 
-  .hljs-attribute {
-    color: #a78bfa;
-  }
+html.dark .hljs-attribute {
+  color: #a78bfa;
+}
 
-  .hljs-key {
-    color: #60a5fa;
-  }
+html.dark .hljs-key {
+  color: #60a5fa;
+}
 
-  .hljs-arrow {
-    color: #7a8290;
-  }
+html.dark .hljs-arrow {
+  color: #7a8290;
+}
 
-  .hljs-operator {
-    color: #7a8290;
-  }
+html.dark .hljs-operator {
+  color: #7a8290;
 }
