@@ -16,11 +16,17 @@ export function Toast({ message, type = "error", onClose }: ToastProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(() => onCloseRef.current(), 300);
     }, 4000);
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Close after fade-out animation completes
+  useEffect(() => {
+    if (isVisible) return;
+    const timer = setTimeout(() => onCloseRef.current(), 300);
+    return () => clearTimeout(timer);
+  }, [isVisible]);
 
   const bgColor = {
     error: "bg-error-bg border-error/40 text-error",
@@ -39,7 +45,7 @@ export function Toast({ message, type = "error", onClose }: ToastProps) {
         <button
           onClick={() => {
             setIsVisible(false);
-            setTimeout(onClose, 300);
+            setTimeout(() => onCloseRef.current(), 300);
           }}
           className="text-foreground-tertiary hover:text-foreground shrink-0 transition-colors duration-100"
         >

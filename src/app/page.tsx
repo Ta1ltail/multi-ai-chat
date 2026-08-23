@@ -8,22 +8,14 @@ import { ModelSelector } from "@/components/model-selector";
 import { Toast } from "@/components/toast";
 import { getDefaultModel, getModelById } from "@/lib/ai";
 import { useTheme } from "@/lib/use-theme";
-import { loadConversations, saveConversations, type PersistedConversation } from "@/lib/conversations";
-
-interface Conversation {
-  id: string;
-  title: string;
-  messages: MessageData[];
-  createdAt: number;
-}
+import { readSSEStream } from "@/lib/sse";
+import { loadConversations, saveConversations, type Conversation } from "@/lib/conversations";
 
 interface ToastState {
   id: number;
   message: string;
   type: "error" | "success" | "info";
 }
-
-let toastCounter = 0;
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -35,24 +27,6 @@ function generateTitle(firstMessage: string): string {
   return trimmed.slice(0, 40).trimEnd() + "...";
 }
 
-function conversationsToPersisted(conversations: Conversation[]): PersistedConversation[] {
-  return conversations.map((c) => ({
-    id: c.id,
-    title: c.title,
-    messages: c.messages,
-    createdAt: c.createdAt,
-  }));
-}
-
-function persistedToConversations(persisted: PersistedConversation[]): Conversation[] {
-  return persisted.map((c) => ({
-    id: c.id,
-    title: c.title,
-    messages: c.messages,
-    createdAt: c.createdAt,
-  }));
-}
-
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -61,6 +35,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [toasts, setToasts] = useState<ToastState[]>([]);
   const [selectedModel, setSelectedModel] = useState(getDefaultModel().id);
+  const toastCounterRef = useRef(0);
   const activeIdRef = useRef(activeId);
   activeIdRef.current = activeId;
   const selectedModelRef = useRef(selectedModel);
@@ -70,7 +45,7 @@ export default function Home() {
   useEffect(() => {
     const persisted = loadConversations();
     if (persisted.length > 0) {
-      setConversations(persistedToConversations(persisted));
+      setConversations(persisted);
     }
     setLoaded(true);
   }, []);
@@ -81,7 +56,7 @@ export default function Home() {
     if (!loaded) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      saveConversations(conversationsToPersisted(conversations));
+      saveConversations(conversations);
     }, 500);
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -92,7 +67,7 @@ export default function Home() {
   const messages = activeConversation?.messages ?? [];
 
   const addToast = useCallback((message: string, type: ToastState["type"] = "error") => {
-    const id = ++toastCounter;
+    const id = ++toastCounterRef.current;
     setToasts((prev) => [...prev, { id, message, type }]);
   }, []);
 
@@ -186,53 +161,30 @@ export default function Home() {
           throw new Error(`API error: ${res.status}`);
         }
 
-        const reader = res.body?.getReader();
-        if (!reader) throw new Error("No reader available");
-
-        const decoder = new TextDecoder();
         let fullText = "";
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              if (data === "[DONE]") continue;
-
-              try {
-                const parsed = JSON.parse(data) as { text?: string; error?: string };
-                if (parsed.error) throw new Error(parsed.error);
-                if (parsed.text) {
-                  fullText += parsed.text;
-                  const currentFullText = fullText;
-                  setConversations((prev) =>
-                    prev.map((c) =>
-                      c.id === convId
-                        ? {
-                            ...c,
-                            messages: c.messages.map((m) =>
-                              m.id === assistantId ? { ...m, content: currentFullText } : m,
-                            ),
-                          }
-                        : c,
-                    ),
-                  );
-                }
-              } catch {
-                // Skip malformed JSON lines
-              }
+        await readSSEStream(
+          res,
+          (event) => {
+            if (event.text) {
+              fullText += event.text;
+              const currentFullText = fullText;
+              setConversations((prev) =>
+                prev.map((c) =>
+                  c.id === convId
+                    ? {
+                        ...c,
+                        messages: c.messages.map((m) =>
+                          m.id === assistantId ? { ...m, content: currentFullText } : m,
+                        ),
+                      }
+                    : c,
+                ),
+              );
             }
-          }
-        }
+          },
+          () => {},
+        );
       } catch (error) {
-        console.error("Chat error:", error);
         const errorMsg = error instanceof Error ? error.message : "Failed to get response";
         addToast(errorMsg);
         setConversations((prev) =>
@@ -311,7 +263,7 @@ export default function Home() {
         </div>
       ) : (
         <>
-          <MessageList messages={messages} isLoading={isLoading} />
+          <MessageList key={activeId ?? "empty"} messages={messages} isLoading={isLoading} />
           <div className="shrink-0 px-4 pb-1 pt-2 md:px-5">
             <div className="mx-auto max-w-3xl">
               <ModelSelector

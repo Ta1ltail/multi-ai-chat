@@ -109,24 +109,25 @@ export const openrouterProvider: AIProvider = {
                 continue;
               }
 
+              let parsed: {
+                choices?: Array<{ delta?: { content?: string | null } }>;
+                error?: { message?: string };
+              };
               try {
-                const parsed = JSON.parse(data) as {
-                  choices?: Array<{ delta?: { content?: string | null } }>;
-                  error?: { message?: string };
-                };
-
-                if (parsed.error) {
-                  throw new Error(parsed.error.message ?? "OpenRouter stream error");
-                }
-
-                const content = parsed.choices?.[0]?.delta?.content;
-                if (content) {
-                  controller.enqueue(
-                    encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`),
-                  );
-                }
+                parsed = JSON.parse(data);
               } catch {
-                // Skip malformed JSON lines
+                continue; // Skip malformed JSON lines
+              }
+
+              if (parsed.error) {
+                throw new Error(parsed.error.message ?? "OpenRouter stream error");
+              }
+
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                controller.enqueue(
+                  encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`),
+                );
               }
             }
           }

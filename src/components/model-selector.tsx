@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { providerConfigs, type ModelConfig } from "@/lib/ai";
 
+const allModels = providerConfigs.flatMap((p) => p.models);
+
 interface ModelSelectorProps {
   selectedModel: string;
   onSelectModel: (modelId: string) => void;
@@ -13,9 +15,7 @@ export function ModelSelector({ selectedModel, onSelectModel, disabled }: ModelS
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const currentModel = providerConfigs
-    .flatMap((p) => p.models)
-    .find((m) => m.id === selectedModel);
+  const currentModel = allModels.find((m) => m.id === selectedModel);
 
   const handleClose = useCallback(() => {
     setIsOpen(false);

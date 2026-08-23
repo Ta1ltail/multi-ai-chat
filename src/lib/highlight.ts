@@ -101,12 +101,9 @@ const aliases: Record<string, string> = {
   ts: "typescript",
   tsx: "typescript",
   py: "python",
-  rb: "ruby",
   sh: "bash",
   shell: "bash",
   zsh: "bash",
-  yml: "yaml",
-  md: "markdown",
   dockerfile: "bash",
 };
 

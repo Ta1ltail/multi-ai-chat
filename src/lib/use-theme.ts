@@ -29,7 +29,6 @@ function applyTheme(theme: Theme) {
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
 
   // Initialize on mount
   useEffect(() => {
@@ -37,7 +36,6 @@ export function useTheme() {
     const initial = stored ?? getSystemTheme();
     setTheme(initial);
     applyTheme(initial);
-    setMounted(true);
   }, []);
 
   // Listen for system theme changes (only if user hasn't set a preference)
@@ -64,5 +62,5 @@ export function useTheme() {
     });
   }, []);
 
-  return { theme, toggleTheme, mounted };
+  return { theme, toggleTheme };
 }
