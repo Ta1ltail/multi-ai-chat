@@ -12,8 +12,14 @@
 | **npm**            | Package manager | Standard, reliable, widely used                    |
 | **Git / GitHub**   | Version control | Code history, collaboration, backups               |
 
+## AI Providers
+
+| Provider | Purpose | Status |
+|----------|---------|--------|
+| **Groq** | Primary provider (free tier) | ✅ Integrated |
+| **OpenRouter** | Multi-model access (free tier) | ✅ Integrated |
+
 ## Future Additions (Not Yet)
 
-- **AI Provider SDKs** — Groq (primary), OpenRouter (fallback)
 - **Database** — For conversation storage (TBD)
 - **Auth** — For user management (TBD)

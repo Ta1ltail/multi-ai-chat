@@ -12,6 +12,7 @@ AppShell (sidebar + main area)
 Page Components (page.tsx)
   ├── MessageList — scrollable message container
   ├── ChatInput — auto-resizing textarea
+  ├── ModelSelector — model/provider dropdown
   └── Message — individual message bubbles
 ```
 
@@ -69,5 +70,6 @@ RootLayout (layout.tsx)
               └── <main>
                     ├── MessageList (message-list.tsx)
                     │     └── Message (message.tsx)
+                    ├── ModelSelector (model-selector.tsx)
                     └── ChatInput (chat-input.tsx)
 ```

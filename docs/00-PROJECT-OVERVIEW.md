@@ -32,7 +32,6 @@ Build a single chat interface where users can:
 - No conversation storage/persistence
 - No authentication
 - No database
-- No model selection UI
 - No provider routing or fallback
 - No error handling/retry logic
 - No tests

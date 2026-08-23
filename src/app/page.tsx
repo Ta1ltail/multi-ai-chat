@@ -4,7 +4,9 @@ import { useCallback, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { MessageList, type MessageData } from "@/components/message-list";
 import { ChatInput } from "@/components/chat-input";
+import { ModelSelector } from "@/components/model-selector";
 import { Toast } from "@/components/toast";
+import { getDefaultModel, getModelById } from "@/lib/ai";
 
 interface Conversation {
   id: string;
@@ -36,8 +38,11 @@ export default function Home() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [toasts, setToasts] = useState<ToastState[]>([]);
+  const [selectedModel, setSelectedModel] = useState(getDefaultModel().id);
   const activeIdRef = useRef(activeId);
   activeIdRef.current = activeId;
+  const selectedModelRef = useRef(selectedModel);
+  selectedModelRef.current = selectedModel;
 
   const activeConversation = conversations.find((c) => c.id === activeId);
   const messages = activeConversation?.messages ?? [];
@@ -99,8 +104,6 @@ export default function Home() {
       };
 
       // Capture conversation history BEFORE updating state to avoid stale closure.
-      // The state updater below also captures currentMessages via the updater function,
-      // but we need the history reference for the API call which runs outside the updater.
       let historyMessages: MessageData[] = [];
       setConversations((prev) => {
         const conv = prev.find((c) => c.id === convId);
@@ -108,7 +111,6 @@ export default function Home() {
         const currentMessages = historyMessages;
         const updatedMessages = [...currentMessages, userMsg, assistantMsg];
 
-        // Update title from first user message
         const title =
           conv && conv.messages.length === 0 ? generateTitle(content) : conv?.title ?? "";
 
@@ -125,10 +127,15 @@ export default function Home() {
           content: m.content,
         }));
 
+        // Resolve provider from model config
+        const modelId = selectedModelRef.current;
+        const modelConfig = getModelById(modelId);
+        const providerId = modelConfig?.provider ?? "groq";
+
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: apiMessages }),
+          body: JSON.stringify({ messages: apiMessages, provider: providerId, model: modelId }),
         });
 
         if (!res.ok) {
@@ -175,7 +182,7 @@ export default function Home() {
                   );
                 }
               } catch {
-                // Skip malformed JSON lines (API errors are re-thrown above)
+                // Skip malformed JSON lines
               }
             }
           }
@@ -217,17 +224,33 @@ export default function Home() {
       {messages.length === 0 ? (
         /* Empty state — centered greeting + input */
         <div className="flex flex-1 flex-col items-center justify-center px-4">
-          <h2 className="mb-2 text-lg font-medium text-foreground">
-            Hi, how can I help you today?
+          <h2 className="mb-1.5 text-xl font-semibold tracking-tight text-foreground">
+            How can I help you today?
           </h2>
-          <p className="mb-8 text-sm text-foreground-secondary">Ask me anything.</p>
+          <p className="mb-8 text-sm text-foreground-tertiary">Ask me anything.</p>
           <div className="w-full max-w-2xl">
+            <div className="mb-2 flex justify-center">
+              <ModelSelector
+                selectedModel={selectedModel}
+                onSelectModel={setSelectedModel}
+                disabled={isLoading}
+              />
+            </div>
             <ChatInput onSend={handleSend} disabled={isLoading} />
           </div>
         </div>
       ) : (
         <>
           <MessageList messages={messages} isLoading={isLoading} />
+          <div className="shrink-0 px-4 pb-1 pt-2 md:px-5">
+            <div className="mx-auto max-w-3xl">
+              <ModelSelector
+                selectedModel={selectedModel}
+                onSelectModel={setSelectedModel}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
           <ChatInput onSend={handleSend} disabled={isLoading} />
         </>
       )}

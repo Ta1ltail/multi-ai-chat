@@ -22,7 +22,7 @@ export function AppShell({
 
   return (
     <div className="flex h-dvh overflow-hidden bg-background">
-      {/* Sidebar — uses width to animate on all screen sizes */}
+      {/* Sidebar */}
       <div
         className={`bg-surface flex shrink-0 flex-col overflow-hidden transition-[width] duration-200 ease-in-out ${
           sidebarOpen ? "w-64" : "w-0"
@@ -34,7 +34,6 @@ export function AppShell({
             onNewChat={onNewChat}
             onSelectConversation={(id) => {
               onSelectConversation(id);
-              // Only close sidebar on mobile
               if (window.innerWidth < 768) {
                 setSidebarOpen(false);
               }
@@ -45,10 +44,10 @@ export function AppShell({
         </div>
       </div>
 
-      {/* Sidebar separator line — only when sidebar is open */}
+      {/* Sidebar separator */}
       {sidebarOpen && <div className="hidden w-px shrink-0 bg-border-separator md:block" />}
 
-      {/* Mobile overlay when sidebar open */}
+      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/20 backdrop-blur-[1px] md:hidden"
@@ -62,15 +61,15 @@ export function AppShell({
         />
       )}
 
-      {/* Floating reopen button — visible when sidebar is closed */}
+      {/* Reopen button — visible when sidebar is closed */}
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
           aria-label="Open sidebar"
           title="Open sidebar"
-          className="focus-ring text-foreground-secondary hover:text-foreground fixed left-3 top-3 z-40 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-surface shadow-shadow-md transition-colors hover:bg-hover active:bg-active"
+          className="focus-ring text-foreground-tertiary hover:text-foreground fixed left-3 top-3 z-40 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-surface shadow-sm transition-colors duration-150 hover:bg-hover active:bg-active"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="3" width="18" height="18" rx="2" />
             <line x1="9" y1="3" x2="9" y2="21" />
           </svg>

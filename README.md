@@ -4,7 +4,7 @@ A web-based AI chat platform that gives users one unified interface to access mu
 
 ## Status
 
-✅ **Phase 2 Complete** — Chat UI + Groq AI integration (streaming responses).
+✅ **Phase 5 Complete** — Chat UI + Multiple AI providers (Groq, OpenRouter) + Model selection.
 
 ## Tech Stack
 
@@ -20,6 +20,7 @@ A web-based AI chat platform that gives users one unified interface to access mu
 - Node.js 18+
 - npm
 - [Groq API key](https://console.groq.com/keys) (free tier)
+- [OpenRouter API key](https://openrouter.ai/keys) (optional, free tier available)
 
 ### Installation
 
@@ -32,10 +33,11 @@ npm install
 ### Setup
 
 1. Copy `.env.example` to `.env.local`
-2. Add your Groq API key:
+2. Add your API keys:
 
 ```
 GROQ_API_KEY=gsk_your_key_here
+OPENROUTER_API_KEY=sk-or-...
 ```
 
 ### Development
@@ -61,9 +63,7 @@ multi-ai-chat/
 ├── src/
 │   ├── app/              # App Router pages + API routes
 │   ├── components/       # UI components
-│   ├── lib/              # Utilities and AI providers
-│   └── types/            # TypeScript type declarations
-├── public/               # Static assets
+│   └── lib/              # Utilities and AI providers
 ├── docs/                 # Project documentation
 ├── .env.example          # Environment variable template
 ├── AGENTS.md             # AI assistant instructions

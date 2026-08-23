@@ -57,27 +57,27 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   return (
     <div className="shrink-0 px-4 py-4 md:px-5">
       <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
-        <div className="bg-surface border-border-input focus-within:border-accent flex items-end gap-2 rounded-2xl border py-2 pr-3 pl-4 shadow-md transition-colors focus-within:shadow-lg">
+        <div className="bg-surface border-border-input focus-within:border-foreground-tertiary flex items-end gap-2 rounded-xl border py-2.5 pr-2.5 pl-4 transition-colors">
           <textarea
             ref={textareaRef}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onInput={handleInput}
-            placeholder="Type a message..."
+            placeholder="Message..."
             rows={1}
             disabled={disabled}
-            className="chat-input-scrollbar placeholder:text-foreground-tertiary text-foreground box-border max-h-70 min-h-0 w-full min-w-0 flex-1 resize-none self-center bg-transparent py-1 text-[15px] leading-relaxed focus:outline-none disabled:opacity-50"
+            className="chat-input-scrollbar placeholder:text-foreground-tertiary text-foreground box-border max-h-70 min-h-0 w-full min-w-0 flex-1 resize-none self-center bg-transparent py-0.5 text-[15px] leading-relaxed focus:outline-none disabled:opacity-50"
           />
           <button
             type="submit"
             disabled={!canSend}
             aria-label="Send message"
-            className={`mb-1 flex h-8 w-8 shrink-0 items-center justify-center self-end rounded-lg transition-all ${
+            className={`mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center self-end rounded-lg transition-all duration-150 ${
               canSend
-                ? "bg-accent hover:bg-accent-hover text-white shadow-sm hover:shadow-md active:scale-95"
+                ? "bg-foreground text-background hover:opacity-90 active:scale-95"
                 : disabled
-                  ? "bg-surface-elevated"
+                  ? "bg-surface-elevated text-foreground-tertiary"
                   : "bg-surface-elevated text-foreground-tertiary"
             }`}
           >
@@ -103,7 +103,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
             ) : (
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path
-                  d="M3 8h10M9 4l4 4-4 4"
+                  d="M8 13V3M4.5 6.5 8 3l3.5 3.5"
                   stroke="currentColor"
                   strokeWidth="1.5"
                   strokeLinecap="round"

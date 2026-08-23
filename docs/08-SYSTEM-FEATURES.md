@@ -20,6 +20,7 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 | `ChatInput` | `src/components/chat-input.tsx` | Auto-resizing textarea + send button |
 | `Message` | `src/components/message.tsx` | Single message bubble (user / assistant / loading) |
 | `MessageList` | `src/components/message-list.tsx` | Scrollable message container with smart auto-scroll |
+| `ModelSelector` | `src/components/model-selector.tsx` | Dropdown to select AI model and provider |
 
 ### Primitives
 
@@ -34,11 +35,21 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 | `/` | `src/app/page.tsx` | Main chat page (client component) |
 | — | `src/app/layout.tsx` | Root layout (fonts, metadata) |
 
+### AI Provider Layer
+
+| File | Role |
+|------|------|
+| `src/lib/ai/index.ts` | Public API: re-exports, system prompt |
+| `src/lib/ai/providers/types.ts` | Interfaces: AIProvider, ModelConfig, StreamOptions |
+| `src/lib/ai/providers/index.ts` | Provider registry, model lookup |
+| `src/lib/ai/providers/groq.ts` | Groq provider implementation |
+| `src/lib/ai/providers/openrouter.ts` | OpenRouter provider implementation |
+
 ### Types
 
 | File | Role |
 |------|------|
-| `src/types/css.d.ts` | CSS module type declaration for IDE support |
+| `src/types/css.d.ts` | CSS module type declaration (unused, kept for safety) |
 
 ---
 
@@ -57,7 +68,7 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 | Box sizing | ✅ | `box-border` prevents width overflow from padding |
 | Height reset on send | ✅ | `useEffect([value])` calls `resizeTextarea()` after `setValue("")` to shrink back to 1 row |
 | Border theming | ✅ | Uses `--border-input` CSS variable, not hardcoded hex |
-| Focus ring | ✅ | `focus-within:border-accent` + `focus-within:shadow-shadow-lg` on container |
+| Focus ring | ✅ | `focus-within:border-accent` + `focus-within:shadow-lg` on container |
 | Performance | ✅ | `requestAnimationFrame` debounce + `cancelAnimationFrame` cancel-on-rerun |
 
 ### 2.2 Message Rendering
@@ -94,7 +105,17 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 | Empty list state | ✅ | "No conversations yet" message |
 | Version footer | ✅ | `v0.1.0` in footer |
 
-### 2.5 Layout
+### 2.5 Model Selection
+
+| Behavior | Status | Detail |
+|----------|--------|--------|
+| Model dropdown | ✅ | Popover with grouped models by provider |
+| Default model | ✅ | First Groq model (GPT-OSS 120B) |
+| Disabled during loading | ✅ | `disabled` prop prevents model switch mid-response |
+| Provider routing | ✅ | Model config includes provider ID; API route resolves provider |
+| Multi-provider support | ✅ | Groq (4 models) + OpenRouter (5 models) |
+
+### 2.6 Layout
 
 | Behavior | Status | Detail |
 |----------|--------|--------|
@@ -186,6 +207,7 @@ html              overflow: hidden
 | Message animation | CSS `@keyframes` | GPU-accelerated, no JS layout cost |
 | Sidebar transition | `transition-[width]` CSS | Hardware-accelerated, no JS animation |
 | AI streaming | SSE via `ReadableStream` | Responses display as they arrive, no waiting for full generation |
+| Model selection | Client-side dropdown | Model/provider resolved from config, no extra state management needed |
 | Syntax highlighting | Regex-based, no deps | Fast client-side code highlighting without heavyweight libraries |
 
 ---
@@ -230,20 +252,20 @@ html              overflow: hidden
 | Typecheck | ✅ | `npx tsc --noEmit` passes with no errors |
 | Named exports | ✅ | All components use named exports (no default exports except page) |
 | Props interfaces | ✅ | Every component has a typed props interface |
-| No dead code | ✅ | Unused components removed (`EmptyState`, `IconButton`) |
+| No dead code | ✅ | Unused files, exports, and components cleaned up |
 | No hardcoded colors | ✅ | All colors use CSS variables via theme system |
 
 ---
 
 ## 9. Issues Remaining
 
-### Mock Data Hardcoded
+### No Persistence
 
-Conversation list in sidebar is hardcoded. Message history is in-memory only. Addressed in Phase 3.
+Conversations and messages exist only in memory. Page refresh loses all data. Addressed in Phase 3/8.
 
 ### No Provider Fallback
 
-Single provider (Groq). If Groq is down, the app fails. Addressed in Phase 7.
+Multiple providers available (Groq, OpenRouter) but no automatic fallback chain. If one provider is down, the user must manually switch. Addressed in Phase 7.
 
 ### No Tests
 
@@ -256,24 +278,29 @@ Zero test files. Phase 8 scope.
 ```
 src/
   app/
-    api/chat/route.ts    — Groq streaming chat API endpoint
-    global.css           — Theme variables, scrollbar styles, animations
-    layout.tsx           — Root layout (fonts, metadata)
-    page.tsx             — Main chat page (state management, API calls)
+    api/chat/route.ts       — Multi-provider streaming chat API endpoint
+    global.css              — Theme variables, scrollbar styles, animations
+    layout.tsx              — Root layout (fonts, metadata)
+    page.tsx                — Main chat page (state management, API calls)
   components/
-    app-shell.tsx        — Sidebar + content layout wrapper
-    button.tsx           — Reusable button primitive
-    chat-input.tsx       — Auto-resizing textarea + send button
-    message-list.tsx     — Scrollable message container with smart auto-scroll
-    message.tsx          — Single message bubble with entrance animation
-    sidebar.tsx          — Navigation drawer
-    toast.tsx            — Toast notification component
+    app-shell.tsx           — Sidebar + content layout wrapper
+    button.tsx              — Reusable button primitive
+    chat-input.tsx          — Auto-resizing textarea + send button
+    message-list.tsx        — Scrollable message container with smart auto-scroll
+    message.tsx             — Single message bubble with entrance animation
+    model-selector.tsx      — Model/provider selection dropdown
+    sidebar.tsx             — Navigation drawer
+    toast.tsx               — Toast notification component
   lib/
-    ai/groq.ts           — Groq provider (client, config, streaming)
-    highlight.ts         — Regex-based syntax highlighter
-    markdown.ts          — Lightweight markdown renderer
-  types/
-    css.d.ts             — CSS module type declaration for IDE support
+    ai/
+      index.ts              — Public API: re-exports, system prompt
+      providers/
+        types.ts            — AIProvider, ModelConfig, StreamOptions interfaces
+        index.ts            — Provider registry, model lookup functions
+        groq.ts             — Groq provider implementation
+        openrouter.ts       — OpenRouter provider implementation
+    highlight.ts            — Regex-based syntax highlighter
+    markdown.ts             — Lightweight markdown renderer
 
 docs/
     00-PROJECT-OVERVIEW.md

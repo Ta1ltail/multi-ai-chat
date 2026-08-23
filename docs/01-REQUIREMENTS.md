@@ -21,10 +21,13 @@
 - **FR-18** — Collapsible sidebar with conversation list
 - **FR-19** — Empty state shows greeting + centered input
 
-### Planned
+### Phase 4-5 — Multiple Providers + Model Selection ✅
 
 - **FR-20** — Users can select an AI model
 - **FR-21** — Users can switch between providers
+
+### Planned
+
 - **FR-22** — System falls back to another provider if one fails
 - **FR-23** — Users can view conversation history (persisted)
 - **FR-24** — System auto-selects the best available free model

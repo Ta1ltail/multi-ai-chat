@@ -41,12 +41,14 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
     }
   }, [messages, isLoading]);
 
-  // Scroll to bottom on initial load
+  // Scroll to bottom on initial load (only once)
+  const hasScrolledInitial = useRef(false);
   useEffect(() => {
-    if (messages.length > 0 && messages[0].content) {
+    if (!hasScrolledInitial.current && messages.length > 0 && messages[0].content) {
       bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      hasScrolledInitial.current = true;
     }
-  }, []);
+  }, [messages]);
 
   return (
     <div
@@ -57,7 +59,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
       <div
         aria-live="polite"
         aria-label="Chat messages"
-        className="mx-auto flex max-w-3xl flex-col gap-4"
+        className="mx-auto flex max-w-3xl flex-col gap-5"
       >
         {messages.map((msg) => (
           <Message key={msg.id} role={msg.role} content={msg.content} />

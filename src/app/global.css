@@ -1,42 +1,38 @@
 @import "tailwindcss";
 
 :root {
-  /* Surfaces */
-  --background: #f8f9fa;
+  /* Surfaces — warm off-whites, not pure white */
+  --background: #f5f6f8;
   --surface: #ffffff;
-  --surface-elevated: #f1f3f5;
+  --surface-elevated: #f0f1f3;
 
-  /* Text — bright and readable */
-  --foreground: #111827;
-  --foreground-secondary: #4b5563;
-  --foreground-tertiary: #6b7280;
+  /* Text — strong, readable hierarchy */
+  --foreground: #1a1d23;
+  --foreground-secondary: #555b66;
+  --foreground-tertiary: #7d8490;
 
-  /* Accent */
+  /* Accent — restrained blue */
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
   --accent-light: #eff6ff;
 
-  /* User bubble — blueish */
-  --user-bubble: #dbeafe;
-  /* Was #ffffff — white on this very light blue was effectively
-     invisible. Dark navy keeps the same "blueish" feel and reads clearly. */
-  --user-bubble-text: #1e3a8a;
+  /* User bubble */
+  --user-bubble: #e8eef8;
+  --user-bubble-text: #1e3a5f;
 
-  /* Interactive */
-  --hover: #f1f3f5;
-  --active: #e9ecef;
+  /* Interactive states */
+  --hover: #f0f1f3;
+  --active: #e4e6e9;
   --focus-ring: #93c5fd;
 
-  /* Borders */
-  --border-separator: #e5e7eb;
+  /* Borders — visible but subtle */
+  --border-separator: #e2e4e8;
   --border-input: #d1d5db;
 
-  /* Shadows — named *-value so the @theme keys below (which generate the
-     real shadow-sm/md/lg utilities) don't share a name with these and
-     become circular. */
+  /* Shadows — minimal, professional */
   --shadow-value-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-value-md: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-value-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-value-md: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-value-lg: 0 4px 12px rgba(0, 0, 0, 0.08);
 
   /* Status */
   --error: #dc2626;
@@ -45,34 +41,42 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f0f11;
-    --surface: #1a1a1e;
-    --surface-elevated: #252529;
+    /* Surfaces — distinct layers, not pure black */
+    --background: #111318;
+    --surface: #1a1c22;
+    --surface-elevated: #22252c;
 
-    --foreground: #f3f4f6;
-    --foreground-secondary: #c9cdd4;
-    --foreground-tertiary: #9ca3af;
+    /* Text — clear hierarchy */
+    --foreground: #e8eaed;
+    --foreground-secondary: #adb3bc;
+    --foreground-tertiary: #7a8290;
 
+    /* Accent — brighter for dark backgrounds */
     --accent: #3b82f6;
     --accent-hover: #60a5fa;
-    --accent-light: #1e3a5f;
+    --accent-light: #1a2744;
 
-    --user-bubble: #1e3a5f;
-    --user-bubble-text: #ffffff;
+    /* User bubble */
+    --user-bubble: #1a2744;
+    --user-bubble-text: #c8ddf8;
 
-    --hover: #26262b;
-    --active: #313137;
+    /* Interactive states */
+    --hover: #252830;
+    --active: #2e3139;
     --focus-ring: #60a5fa;
 
-    --border-separator: #2a2a30;
-    --border-input: #3a3a40;
+    /* Borders — subtle separation */
+    --border-separator: #2a2d35;
+    --border-input: #3a3d45;
 
-    --shadow-value-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-value-md: 0 2px 8px rgba(0, 0, 0, 0.4);
-    --shadow-value-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
+    /* Shadows */
+    --shadow-value-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-value-md: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-value-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
 
+    /* Status */
     --error: #ef4444;
-    --error-bg: #1c1010;
+    --error-bg: #2a1418;
   }
 }
 
@@ -103,11 +107,6 @@
   --color-error: var(--error);
   --color-error-bg: var(--error-bg);
 
-  /* Was --color-shadow-sm/md/lg — the "color-" prefix makes Tailwind v4
-     generate color utilities (bg-shadow-sm, text-shadow-sm, ...), not
-     box-shadow ones. Using the bare --shadow-* prefix generates the real
-     shadow-sm / shadow-md / shadow-lg box-shadow utilities. Components
-     should use those names directly (shadow-sm, not shadow-shadow-sm). */
   --shadow-sm: var(--shadow-value-sm);
   --shadow-md: var(--shadow-value-md);
   --shadow-lg: var(--shadow-value-lg);
@@ -116,7 +115,7 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Base styles */
+/* ─── Base ─────────────────────────────────────────── */
 
 html,
 body {
@@ -129,7 +128,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Focus ring utility */
+/* ─── Focus ring ───────────────────────────────────── */
+
 .focus-ring {
   outline: none;
 }
@@ -138,11 +138,25 @@ body {
   outline-offset: 2px;
 }
 
-/* Message entrance animation */
+/* ─── Reduced motion ───────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Message entrance animation ───────────────────── */
+
 @keyframes message-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -150,10 +164,11 @@ body {
   }
 }
 .message-animate-in {
-  animation: message-in 0.2s ease-out both;
+  animation: message-in 0.18s ease-out both;
 }
 
-/* Scrollbar styling */
+/* ─── Scrollbar ────────────────────────────────────── */
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
 }
@@ -167,8 +182,12 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--foreground-tertiary);
 }
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--active) transparent;
+}
 
-/* Textarea scrollbar — thin and subtle */
+/* Textarea scrollbar */
 .chat-input-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
@@ -187,9 +206,10 @@ body {
   scrollbar-color: var(--foreground-tertiary) transparent;
 }
 
-/* Syntax highlighting — Light mode */
+/* ─── Syntax highlighting — Light mode ─────────────── */
+
 .hljs-comment {
-  color: #6b7280;
+  color: #7d8490;
   font-style: italic;
 }
 
@@ -231,17 +251,18 @@ body {
 }
 
 .hljs-arrow {
-  color: #6b7280;
+  color: #7d8490;
 }
 
 .hljs-operator {
-  color: #6b7280;
+  color: #7d8490;
 }
 
-/* Syntax highlighting — Dark mode */
+/* ─── Syntax highlighting — Dark mode ──────────────── */
+
 @media (prefers-color-scheme: dark) {
   .hljs-comment {
-    color: #6b7280;
+    color: #7a8290;
   }
 
   .hljs-string {
@@ -281,10 +302,10 @@ body {
   }
 
   .hljs-arrow {
-    color: #9ca3af;
+    color: #7a8290;
   }
 
   .hljs-operator {
-    color: #9ca3af;
+    color: #7a8290;
   }
 }

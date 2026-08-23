@@ -14,30 +14,24 @@ export function renderMarkdown(text: string): string {
     const language = lang || "text";
     const highlighted = getHighlightedCode(code.trim(), language);
 
-    // NOTE: the copy button intentionally has no inline `onclick`. HTML
-    // attributes don't support backslash-escaping (`\"`), only entity
-    // escaping (`&quot;`) — an earlier version used `\"` around the SVG
-    // markup, which the HTML parser read as the end of the `onclick`
-    // attribute, truncating it. Clicks are handled instead via event
-    // delegation in Message.tsx.
-    //
-    // The button lives OUTSIDE `.code-block` (in the wrapper, below the
-    // box) but is still found via `.closest(".code-block-wrapper")`.
     return `<div class="code-block-wrapper my-3">
-      <div class="code-block overflow-hidden rounded-xl border border-border-separator bg-surface-elevated">
+      <div class="code-block overflow-hidden rounded-lg border border-border-separator bg-surface-elevated">
         <pre class="overflow-x-auto p-4 text-[13px] leading-relaxed"><code class="font-mono text-foreground">${highlighted}</code></pre>
       </div>
       <div class="mt-1 flex justify-start">
-        <button type="button" class="copy-code-btn text-foreground-tertiary hover:text-foreground hover:bg-hover flex h-7 w-7 items-center justify-center rounded-md transition-colors" title="Copy code">
-          <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          <svg class="check-icon hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <button type="button" class="copy-code-btn text-foreground-tertiary hover:text-foreground inline-flex h-6 w-6 items-center justify-center rounded-md transition-colors duration-100 hover:bg-hover" title="Copy code">
+          <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          <svg class="check-icon hidden" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         </button>
       </div>
     </div>`;
   });
 
   // Inline code (` ... `)
-  html = html.replace(/`([^`]+)`/g, '<code class="bg-surface-elevated rounded px-1.5 py-0.5 text-[13px] font-mono text-accent">$1</code>');
+  html = html.replace(
+    /`([^`]+)`/g,
+    '<code class="bg-surface-elevated rounded px-1.5 py-0.5 text-[13px] font-mono text-accent">$1</code>',
+  );
 
   // Bold (** ... **)
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
@@ -48,7 +42,7 @@ export function renderMarkdown(text: string): string {
   // Links [text](url)
   html = html.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-accent underline hover:text-accent-hover">$1</a>',
+    '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-accent underline decoration-accent/30 underline-offset-2 transition-colors hover:text-accent-hover hover:decoration-accent-hover">$1</a>',
   );
 
   // Unordered lists (- item)
@@ -57,8 +51,10 @@ export function renderMarkdown(text: string): string {
 
   // Ordered lists (1. item)
   html = html.replace(/^\d+\.\s+(.+)$/gm, '<li class="ml-4 list-decimal">$1</li>');
-  // Wrap consecutive <li> elements in <ol>
-  html = html.replace(/(<li class="ml-4 list-decimal">[^<]*<\/li>\n?)+/g, (match) => `<ol class="my-2 space-y-1">${match}</ol>`);
+  html = html.replace(
+    /(<li class="ml-4 list-decimal">[^<]*<\/li>\n?)+/g,
+    (match) => `<ol class="my-2 space-y-1">${match}</ol>`,
+  );
 
   // Line breaks (but not inside pre tags)
   html = html.replace(/(?<!<\/pre>)\n(?!<)/g, "<br>");
