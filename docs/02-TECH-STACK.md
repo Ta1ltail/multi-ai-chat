@@ -14,6 +14,6 @@
 
 ## Future Additions (Not Yet)
 
-- **AI Provider SDKs** — Gemini, Groq, OpenRouter
+- **AI Provider SDKs** — Groq (primary), OpenRouter (fallback)
 - **Database** — For conversation storage (TBD)
 - **Auth** — For user management (TBD)

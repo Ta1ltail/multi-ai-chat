@@ -25,9 +25,8 @@ Next.js UI (App Router)
 Application/API Layer
   ↓
 AI Provider Layer
-  ├── Gemini (Google)
-  ├── Groq
-  └── OpenRouter
+  ├── Groq (primary)
+  └── OpenRouter (fallback)
 ```
 
 ## How It Will Grow

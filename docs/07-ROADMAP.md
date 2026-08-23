@@ -18,12 +18,12 @@
   - Message entrance animations
 - **Done when:** User can type and see messages in a clean UI
 
-## Phase 2 — Single AI Provider
+## Phase 2 — Single AI Provider ✅
 
 - **Goal:** Connect to one AI provider
 - **Tasks:**
   - API route for AI communication
-  - Connect Gemini (free tier)
+  - Connect Groq (free tier, 14,400 req/day)
   - Stream responses
 - **Done when:** User sends a message and gets an AI response
 

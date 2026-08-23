@@ -1,18 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { MessageList, type MessageData } from "@/components/message-list";
 import { ChatInput } from "@/components/chat-input";
 import { Toast } from "@/components/toast";
 
-const mockConversations = [
-  { id: "1", title: "Welcome chat", active: true },
-  { id: "2", title: "Comparing LLM providers" },
-  { id: "3", title: "Free tier options" },
-];
-
-const initialMessages: MessageData[] = [];
+interface Conversation {
+  id: string;
+  title: string;
+  messages: MessageData[];
+  createdAt: number;
+}
 
 interface ToastState {
   id: number;
@@ -20,14 +19,31 @@ interface ToastState {
   type: "error" | "success" | "info";
 }
 
+let toastCounter = 0;
+
+function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function generateTitle(firstMessage: string): string {
+  const trimmed = firstMessage.trim();
+  if (trimmed.length <= 40) return trimmed;
+  return trimmed.slice(0, 40).trimEnd() + "...";
+}
+
 export default function Home() {
-  const [conversations] = useState(mockConversations);
-  const [messages, setMessages] = useState<MessageData[]>(initialMessages);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [toasts, setToasts] = useState<ToastState[]>([]);
+  const activeIdRef = useRef(activeId);
+  activeIdRef.current = activeId;
+
+  const activeConversation = conversations.find((c) => c.id === activeId);
+  const messages = activeConversation?.messages ?? [];
 
   const addToast = useCallback((message: string, type: ToastState["type"] = "error") => {
-    const id = Date.now();
+    const id = ++toastCounter;
     setToasts((prev) => [...prev, { id, message, type }]);
   }, []);
 
@@ -35,28 +51,78 @@ export default function Home() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const handleNewChat = useCallback(() => {
+    setActiveId(null);
+  }, []);
+
+  const handleSelectConversation = useCallback((id: string) => {
+    setActiveId(id);
+  }, []);
+
+  const handleDeleteConversation = useCallback(
+    (id: string) => {
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+      if (activeIdRef.current === id) {
+        setActiveId(null);
+      }
+    },
+    [],
+  );
+
   const handleSend = useCallback(
     async (content: string) => {
+      // Create a new conversation if none is active
+      let convId = activeIdRef.current;
+      if (!convId) {
+        convId = generateId();
+        const newConv: Conversation = {
+          id: convId,
+          title: generateTitle(content),
+          messages: [],
+          createdAt: Date.now(),
+        };
+        setConversations((prev) => [newConv, ...prev]);
+        setActiveId(convId);
+      }
+
       const userMsg: MessageData = {
-        id: Date.now().toString(),
+        id: generateId(),
         role: "user",
         content,
       };
 
-      const assistantId = (Date.now() + 1).toString();
+      const assistantId = generateId();
       const assistantMsg: MessageData = {
         id: assistantId,
         role: "assistant",
         content: "",
       };
 
-      setMessages((prev) => [...prev, userMsg, assistantMsg]);
+      // Capture conversation history BEFORE updating state to avoid stale closure.
+      // The state updater below also captures currentMessages via the updater function,
+      // but we need the history reference for the API call which runs outside the updater.
+      let historyMessages: MessageData[] = [];
+      setConversations((prev) => {
+        const conv = prev.find((c) => c.id === convId);
+        historyMessages = conv?.messages ?? [];
+        const currentMessages = historyMessages;
+        const updatedMessages = [...currentMessages, userMsg, assistantMsg];
+
+        // Update title from first user message
+        const title =
+          conv && conv.messages.length === 0 ? generateTitle(content) : conv?.title ?? "";
+
+        return prev.map((c) =>
+          c.id === convId ? { ...c, title, messages: updatedMessages } : c,
+        );
+      });
+
       setIsLoading(true);
 
       try {
-        const apiMessages = [...messages, userMsg].map((m) => ({
-          role: (m.role === "assistant" ? "model" : m.role) as "user" | "model",
-          parts: m.content,
+        const apiMessages = [...historyMessages, userMsg].map((m) => ({
+          role: m.role,
+          content: m.content,
         }));
 
         const res = await fetch("/api/chat", {
@@ -94,14 +160,22 @@ export default function Home() {
                 if (parsed.error) throw new Error(parsed.error);
                 if (parsed.text) {
                   fullText += parsed.text;
-                  setMessages((prev) =>
-                    prev.map((m) =>
-                      m.id === assistantId ? { ...m, content: fullText } : m,
+                  const currentFullText = fullText;
+                  setConversations((prev) =>
+                    prev.map((c) =>
+                      c.id === convId
+                        ? {
+                            ...c,
+                            messages: c.messages.map((m) =>
+                              m.id === assistantId ? { ...m, content: currentFullText } : m,
+                            ),
+                          }
+                        : c,
                     ),
                   );
                 }
               } catch {
-                // Skip malformed JSON lines
+                // Skip malformed JSON lines (API errors are re-thrown above)
               }
             }
           }
@@ -110,27 +184,35 @@ export default function Home() {
         console.error("Chat error:", error);
         const errorMsg = error instanceof Error ? error.message : "Failed to get response";
         addToast(errorMsg);
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId ? { ...m, content: `Error: ${errorMsg}` } : m,
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === convId
+              ? {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === assistantId ? { ...m, content: `Error: ${errorMsg}` } : m,
+                  ),
+                }
+              : c,
           ),
         );
       } finally {
         setIsLoading(false);
       }
     },
-    [messages, addToast],
+    [addToast],
   );
 
   return (
     <AppShell
-      conversations={conversations}
-      onNewChat={() => {
-        setMessages([]);
-      }}
-      onSelectConversation={(id) => {
-        console.log("Selected conversation:", id);
-      }}
+      conversations={conversations.map((c) => ({
+        id: c.id,
+        title: c.title,
+        active: c.id === activeId,
+      }))}
+      onNewChat={handleNewChat}
+      onSelectConversation={handleSelectConversation}
+      onDeleteConversation={handleDeleteConversation}
     >
       {messages.length === 0 ? (
         /* Empty state — centered greeting + input */

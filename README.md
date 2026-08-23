@@ -4,7 +4,7 @@ A web-based AI chat platform that gives users one unified interface to access mu
 
 ## Status
 
-🚧 **In Development** — Project foundation complete. Chat functionality coming next.
+✅ **Phase 2 Complete** — Chat UI + Groq AI integration (streaming responses).
 
 ## Tech Stack
 
@@ -19,6 +19,7 @@ A web-based AI chat platform that gives users one unified interface to access mu
 
 - Node.js 18+
 - npm
+- [Groq API key](https://console.groq.com/keys) (free tier)
 
 ### Installation
 
@@ -26,6 +27,15 @@ A web-based AI chat platform that gives users one unified interface to access mu
 git clone https://github.com/Ta1ltail/multi-ai-chat.git
 cd multi-ai-chat
 npm install
+```
+
+### Setup
+
+1. Copy `.env.example` to `.env.local`
+2. Add your Groq API key:
+
+```
+GROQ_API_KEY=gsk_your_key_here
 ```
 
 ### Development
@@ -49,12 +59,15 @@ npm run build       # Production build
 ```
 multi-ai-chat/
 ├── src/
-│   └── app/          # App Router pages
-├── public/           # Static assets
-├── docs/             # Project documentation
-├── AGENTS.md         # AI assistant instructions
+│   ├── app/              # App Router pages + API routes
+│   ├── components/       # UI components
+│   ├── lib/              # Utilities and AI providers
+│   └── types/            # TypeScript type declarations
+├── public/               # Static assets
+├── docs/                 # Project documentation
+├── .env.example          # Environment variable template
+├── AGENTS.md             # AI assistant instructions
 ├── README.md
-├── .env.example      # Environment variable template
 ├── package.json
 └── tsconfig.json
 ```

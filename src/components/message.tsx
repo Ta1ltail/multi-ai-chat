@@ -140,8 +140,8 @@ export function Message({ role, content, loading }: MessageProps) {
 
   if (isUser) {
     return (
-      <div className="message-animate-in flex flex-col items-end">
-        <div className="bg-user-bubble text-user-bubble-text max-w-[80%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed shadow-sm md:max-w-[65%]">
+      <div className="message-animate-in flex min-w-0 flex-col items-end">
+        <div className="bg-user-bubble text-user-bubble-text max-w-[80%] min-w-0 rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed shadow-sm md:max-w-[65%]">
           <p className="wrap-break-word whitespace-pre-wrap">{content}</p>
         </div>
         {copyButton && <div className="mt-1">{copyButton}</div>}

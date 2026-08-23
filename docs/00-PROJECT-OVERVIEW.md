@@ -22,10 +22,13 @@ Build a single chat interface where users can:
 - Collapsible sidebar with conversation list
 - Dark mode support
 - Responsive layout with overflow containment
+- Groq AI integration with streaming responses
+- Markdown rendering with syntax highlighting
+- Copy message and code block buttons
+- Toast notifications for errors
 
 ## What's NOT Included Yet
 
-- No AI provider integration
 - No conversation storage/persistence
 - No authentication
 - No database

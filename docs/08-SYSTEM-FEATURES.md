@@ -185,7 +185,8 @@ html              overflow: hidden
 | Auto-scroll | `onScroll` tracking + threshold check | Only runs DOM scroll when user is near bottom |
 | Message animation | CSS `@keyframes` | GPU-accelerated, no JS layout cost |
 | Sidebar transition | `transition-[width]` CSS | Hardware-accelerated, no JS animation |
-| Mock responses | `setTimeout` 1500ms | Simulates network latency (no real API calls yet) |
+| AI streaming | SSE via `ReadableStream` | Responses display as they arrive, no waiting for full generation |
+| Syntax highlighting | Regex-based, no deps | Fast client-side code highlighting without heavyweight libraries |
 
 ---
 
@@ -209,11 +210,11 @@ html              overflow: hidden
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| No API keys in client code | ✅ | No API routes or keys exist yet |
-| No secrets in source | ✅ | All config is public (package.json, tsconfig) |
-| No `eval()` or `dangerouslySetInnerHTML` | ✅ | No dynamic HTML injection |
+| API keys server-side only | ✅ | `GROQ_API_KEY` in `.env.local`, accessed only in API routes |
+| No secrets in source | ✅ | `.env.local` gitignored, `.env.example` has placeholder only |
+| No `eval()` or `dangerouslySetInnerHTML` | ⚠️ | Markdown renderer uses `dangerouslySetInnerHTML` for assistant messages — HTML is generated server-side from markdown, not user input |
 | No external script loads | ✅ | Only Google Fonts via `next/font` |
-| Input sanitization | ⚠️ | React escapes JSX by default, but no explicit sanitization on mock responses |
+| Input sanitization | ✅ | React escapes user input in JSX; assistant content is markdown-rendered |
 
 ---
 
@@ -238,15 +239,15 @@ html              overflow: hidden
 
 ### Mock Data Hardcoded
 
-All conversation and message data is hardcoded in `page.tsx`. Expected for Phase 1, addressed in Phase 3.
+Conversation list in sidebar is hardcoded. Message history is in-memory only. Addressed in Phase 3.
 
-### No Error Handling
+### No Provider Fallback
 
-No error boundary, toast system, or retry logic. Phase 2+ scope.
+Single provider (Groq). If Groq is down, the app fails. Addressed in Phase 7.
 
 ### No Tests
 
-Zero test files. Phase 2+ scope.
+Zero test files. Phase 8 scope.
 
 ---
 
@@ -255,9 +256,10 @@ Zero test files. Phase 2+ scope.
 ```
 src/
   app/
+    api/chat/route.ts    — Groq streaming chat API endpoint
     global.css           — Theme variables, scrollbar styles, animations
     layout.tsx           — Root layout (fonts, metadata)
-    page.tsx             — Main chat page (mock data, state management)
+    page.tsx             — Main chat page (state management, API calls)
   components/
     app-shell.tsx        — Sidebar + content layout wrapper
     button.tsx           — Reusable button primitive
@@ -265,6 +267,11 @@ src/
     message-list.tsx     — Scrollable message container with smart auto-scroll
     message.tsx          — Single message bubble with entrance animation
     sidebar.tsx          — Navigation drawer
+    toast.tsx            — Toast notification component
+  lib/
+    ai/groq.ts           — Groq provider (client, config, streaming)
+    highlight.ts         — Regex-based syntax highlighter
+    markdown.ts          — Lightweight markdown renderer
   types/
     css.d.ts             — CSS module type declaration for IDE support
 

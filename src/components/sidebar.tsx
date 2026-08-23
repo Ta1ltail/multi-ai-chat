@@ -4,10 +4,17 @@ interface SidebarProps {
   conversations: Array<{ id: string; title: string; active?: boolean }>;
   onNewChat: () => void;
   onSelectConversation: (id: string) => void;
+  onDeleteConversation: (id: string) => void;
   onToggle: () => void;
 }
 
-export function Sidebar({ conversations, onNewChat, onSelectConversation, onToggle }: SidebarProps) {
+export function Sidebar({
+  conversations,
+  onNewChat,
+  onSelectConversation,
+  onDeleteConversation,
+  onToggle,
+}: SidebarProps) {
   return (
     <div className="flex h-full flex-col">
       {/* Header with toggle inside */}
@@ -43,10 +50,10 @@ export function Sidebar({ conversations, onNewChat, onSelectConversation, onTogg
         ) : (
           <ul className="space-y-px">
             {conversations.map((conv) => (
-              <li key={conv.id}>
+              <li key={conv.id} className="group relative">
                 <button
                   onClick={() => onSelectConversation(conv.id)}
-                  className={`focus-ring flex w-full items-center gap-2.5 truncate rounded-lg px-3 py-2 text-left text-[14px] transition-colors ${
+                  className={`focus-ring flex w-full items-center gap-2.5 truncate rounded-lg px-3 py-2 pr-8 text-left text-[14px] transition-colors ${
                     conv.active
                       ? "bg-accent-light font-medium text-foreground"
                       : "text-foreground-secondary hover:bg-hover hover:text-foreground"
@@ -56,6 +63,25 @@ export function Sidebar({ conversations, onNewChat, onSelectConversation, onTogg
                     <path d="M2 4h12M2 8h8M2 12h10" />
                   </svg>
                   <span className="truncate">{conv.title}</span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteConversation(conv.id);
+                  }}
+                  aria-label={`Delete ${conv.title}`}
+                  title="Delete conversation"
+                  className={`focus-ring text-foreground-tertiary hover:text-error absolute right-1 top-1/2 -translate-y-1/2 inline-flex h-6 w-6 items-center justify-center rounded-md transition-opacity hover:bg-error-bg ${
+                    conv.active
+                      ? "opacity-100"
+                      : "opacity-0 group-hover:opacity-100"
+                  }`}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" />
+                    <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                  </svg>
                 </button>
               </li>
             ))}

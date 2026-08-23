@@ -8,6 +8,7 @@ interface AppShellProps {
   conversations: Array<{ id: string; title: string; active?: boolean }>;
   onNewChat: () => void;
   onSelectConversation: (id: string) => void;
+  onDeleteConversation: (id: string) => void;
 }
 
 export function AppShell({
@@ -15,6 +16,7 @@ export function AppShell({
   conversations,
   onNewChat,
   onSelectConversation,
+  onDeleteConversation,
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -32,8 +34,12 @@ export function AppShell({
             onNewChat={onNewChat}
             onSelectConversation={(id) => {
               onSelectConversation(id);
-              setSidebarOpen(false);
+              // Only close sidebar on mobile
+              if (window.innerWidth < 768) {
+                setSidebarOpen(false);
+              }
             }}
+            onDeleteConversation={onDeleteConversation}
             onToggle={() => setSidebarOpen(false)}
           />
         </div>

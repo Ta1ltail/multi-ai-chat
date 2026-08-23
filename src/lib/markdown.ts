@@ -56,7 +56,9 @@ export function renderMarkdown(text: string): string {
   html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, (match) => `<ul class="my-2 space-y-1">${match}</ul>`);
 
   // Ordered lists (1. item)
-  html = html.replace(/^\d+\. (.+)$/gm, '<li class="ml-4 list-decimal">$1</li>');
+  html = html.replace(/^\d+\.\s+(.+)$/gm, '<li class="ml-4 list-decimal">$1</li>');
+  // Wrap consecutive <li> elements in <ol>
+  html = html.replace(/(<li class="ml-4 list-decimal">[^<]*<\/li>\n?)+/g, (match) => `<ol class="my-2 space-y-1">${match}</ol>`);
 
   // Line breaks (but not inside pre tags)
   html = html.replace(/(?<!<\/pre>)\n(?!<)/g, "<br>");
