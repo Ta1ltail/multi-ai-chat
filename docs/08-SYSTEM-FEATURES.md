@@ -11,7 +11,7 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 | Component | File | Role |
 |-----------|------|------|
 | `AppShell` | `src/components/app-shell.tsx` | Root layout: sidebar + main content area |
-| `Sidebar` | `src/components/sidebar.tsx` | Navigation drawer with conversation list |
+| `Sidebar` | `src/components/sidebar.tsx` | Navigation drawer with conversation list, theme toggle |
 
 ### Chat
 
@@ -33,7 +33,7 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 | Route | File | Role |
 |-------|------|------|
 | `/` | `src/app/page.tsx` | Main chat page (client component) |
-| — | `src/app/layout.tsx` | Root layout (fonts, metadata) |
+| — | `src/app/layout.tsx` | Root layout (fonts, metadata, theme script) |
 
 ### AI Provider Layer
 
@@ -45,11 +45,14 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 | `src/lib/ai/providers/groq.ts` | Groq provider implementation |
 | `src/lib/ai/providers/openrouter.ts` | OpenRouter provider implementation |
 
-### Types
+### Utilities
 
 | File | Role |
 |------|------|
-| `src/types/css.d.ts` | CSS module type declaration (unused, kept for safety) |
+| `src/lib/conversations.ts` | localStorage persistence for conversations |
+| `src/lib/use-theme.ts` | Theme hook: light/dark toggle with localStorage |
+| `src/lib/highlight.ts` | Regex-based syntax highlighting |
+| `src/lib/markdown.ts` | Lightweight markdown renderer |
 
 ---
 
@@ -63,12 +66,11 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 | Shift+Enter newline | ✅ | `handleKeyDown` checks `!e.shiftKey` — Shift+Enter inserts newline, plain Enter submits |
 | Enter to send | ✅ | Prevents default, calls `handleSubmit`, clears value |
 | Send button state | ✅ | Disabled when empty or `disabled` prop; shows spinner when loading |
-| Send button position | ✅ | `self-end mb-1` inside flex row — anchored bottom-right as textarea grows upward |
-| Container layout | ✅ | `flex items-end gap-2 py-2` — textarea grows upward, button stays at bottom |
+| Send button style | ✅ | Foreground/background inversion when active, subtle when idle |
 | Box sizing | ✅ | `box-border` prevents width overflow from padding |
 | Height reset on send | ✅ | `useEffect([value])` calls `resizeTextarea()` after `setValue("")` to shrink back to 1 row |
 | Border theming | ✅ | Uses `--border-input` CSS variable, not hardcoded hex |
-| Focus ring | ✅ | `focus-within:border-accent` + `focus-within:shadow-lg` on container |
+| Focus ring | ✅ | `focus-within:border-foreground-tertiary` on container |
 | Performance | ✅ | `requestAnimationFrame` debounce + `cancelAnimationFrame` cancel-on-rerun |
 
 ### 2.2 Message Rendering
@@ -76,12 +78,13 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 | Behavior | Status | Detail |
 |----------|--------|--------|
 | User bubble | ✅ | Blue background (`--user-bubble`), right-aligned, `max-w-[65%]` md / `max-w-[80%]` sm |
-| Assistant message | ✅ | Transparent, left-aligned, `max-w-[70%]` md / `max-w-[80%]` sm |
+| Assistant message | ✅ | Transparent, left-aligned, full width |
 | Loading indicator | ✅ | Three pulsing dots with staggered `animation-delay` |
 | Line breaks | ✅ | `whitespace-pre-wrap` preserves `\n` |
 | Long words/URLs | ✅ | `wrap-break-word` prevents horizontal overflow |
 | Text size | ✅ | `text-[15px] leading-relaxed` for readability |
-| Entrance animation | ✅ | `message-animate-in` — 200ms fade-in + slide-up on every new message |
+| Entrance animation | ✅ | `message-animate-in` — 180ms fade-in + slide-up on every new message |
+| Empty message cleanup | ✅ | Empty assistant messages removed after stream completes |
 
 ### 2.3 Message List
 
@@ -102,14 +105,16 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 | Floating reopen button | ✅ | `fixed left-3 top-3 z-40` when sidebar closed |
 | New chat button | ✅ | Uses `Button` component with `secondary` variant |
 | Conversation list | ✅ | Active state highlighting, truncate on overflow |
+| Delete confirmation | ✅ | Inline "Delete / Cancel" confirmation before deletion |
 | Empty list state | ✅ | "No conversations yet" message |
+| Theme toggle | ✅ | Sun/moon icon in footer, toggles light/dark mode |
 | Version footer | ✅ | `v0.1.0` in footer |
 
 ### 2.5 Model Selection
 
 | Behavior | Status | Detail |
 |----------|--------|--------|
-| Model dropdown | ✅ | Popover with grouped models by provider |
+| Model dropdown | ✅ | Popover with grouped models by provider, scrollable |
 | Default model | ✅ | First Groq model (GPT-OSS 120B) |
 | Disabled during loading | ✅ | `disabled` prop prevents model switch mid-response |
 | Provider routing | ✅ | Model config includes provider ID; API route resolves provider |
@@ -125,6 +130,26 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 | Sidebar separator | ✅ | 1px divider, hidden on mobile |
 | Responsive padding | ✅ | `px-4` sm / `px-5` md on chat input |
 
+### 2.7 Theme System
+
+| Behavior | Status | Detail |
+|----------|--------|--------|
+| Light/dark toggle | ✅ | Sun/moon icon in sidebar footer |
+| System preference | ✅ | Falls back to `prefers-color-scheme` if no stored preference |
+| localStorage persistence | ✅ | Theme choice saved under `"theme"` key |
+| Flash prevention | ✅ | Inline `<script>` in `<head>` applies `.dark` class before paint |
+| Class-based switching | ✅ | `html.dark` class toggles all CSS variables |
+
+### 2.8 Persistence
+
+| Behavior | Status | Detail |
+|----------|--------|--------|
+| Save to localStorage | ✅ | Debounced save (500ms) after each state change |
+| Load on mount | ✅ | Conversations hydrated from localStorage on page load |
+| Corrupted data handling | ✅ | JSON parse errors clear the key and start fresh |
+| Storage quota handling | ✅ | Quota errors retry with half the data |
+| Conversation limit | ✅ | Max 100 conversations to prevent storage bloat |
+
 ---
 
 ## 3. Theme System
@@ -135,32 +160,32 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 
 | Token | Value | Purpose |
 |-------|-------|---------|
-| `--background` | `#f8f9fa` | Page background |
+| `--background` | `#f5f6f8` | Page background (warm off-white) |
 | `--surface` | `#ffffff` | Card/container background |
-| `--surface-elevated` | `#f1f3f5` | Elevated elements (disabled button) |
-| `--foreground` | `#111827` | Primary text |
-| `--foreground-secondary` | `#4b5563` | Secondary text |
-| `--foreground-tertiary` | `#6b7280` | Placeholder/hint text |
+| `--surface-elevated` | `#f0f1f3` | Elevated elements |
+| `--foreground` | `#1a1d23` | Primary text |
+| `--foreground-secondary` | `#555b66` | Secondary text |
+| `--foreground-tertiary` | `#7d8490` | Placeholder/hint text |
 | `--accent` | `#2563eb` | Primary action color (blue) |
 | `--accent-hover` | `#1d4ed8` | Hover state |
 | `--accent-light` | `#eff6ff` | Active sidebar item bg |
-| `--user-bubble` | `#dbeafe` | User message background |
-| `--user-bubble-text` | `#ffffff` | User message text |
-| `--hover` | `#f1f3f5` | Hover background |
-| `--active` | `#e9ecef` | Active/pressed background |
+| `--user-bubble` | `#e8eef8` | User message background |
+| `--user-bubble-text` | `#1e3a5f` | User message text |
+| `--hover` | `#f0f1f3` | Hover background |
+| `--active` | `#e4e6e9` | Active/pressed background |
 | `--focus-ring` | `#93c5fd` | Keyboard focus indicator |
-| `--border-separator` | `#e5e7eb` | Divider lines |
+| `--border-separator` | `#e2e4e8` | Divider lines |
 | `--border-input` | `#d1d5db` | Input field border |
 | `--error` | `#dc2626` | Error state |
 | `--error-bg` | `#fef2f2` | Error background |
 
-**Dark mode (`prefers-color-scheme: dark`):** All tokens overridden with dark equivalents.
+**Dark mode (`html.dark`):** All tokens overridden with dark equivalents.
 
 ### 3.2 Tailwind Theme Mapping
 
 All CSS variables are mapped to Tailwind utilities via `@theme inline` block:
 - `--color-*` → Tailwind color utilities (`bg-surface`, `text-foreground`, etc.)
-- `--shadow-*` → Tailwind shadow utilities (`shadow-shadow-md`)
+- `--shadow-*` → Tailwind shadow utilities (`shadow-sm`, `shadow-md`, `shadow-lg`)
 - `--font-*` → Tailwind font utilities (`font-sans`, `font-mono`)
 
 ### 3.3 Custom CSS Utilities
@@ -170,7 +195,7 @@ All CSS variables are mapped to Tailwind utilities via `@theme inline` block:
 | `.focus-ring` | Keyboard-only focus outline (2px solid, 2px offset) |
 | `.custom-scrollbar` | 5px thin scrollbar for message list and sidebar |
 | `.chat-input-scrollbar` | 4px ultra-thin scrollbar for textarea |
-| `.message-animate-in` | 200ms fade-in + slide-up entrance animation |
+| `.message-animate-in` | 180ms fade-in + slide-up entrance animation |
 
 ---
 
@@ -189,12 +214,6 @@ html              overflow: hidden
             textarea    max-h-70 overflow:auto     ← scrolls internally
 ```
 
-**Why this matters:**
-- `shrink-0` on ChatInput prevents the flex algorithm from compressing it below content height
-- `min-h-0` on `<main>` allows the flex column to shrink below intrinsic content size
-- `overflow: hidden` at every ancestor level ensures no content escapes the viewport
-- Textarea's `max-h-70` (280px) + `overflow: auto` keeps text scrolling inside the box
-
 ---
 
 ## 5. Performance Characteristics
@@ -209,6 +228,7 @@ html              overflow: hidden
 | AI streaming | SSE via `ReadableStream` | Responses display as they arrive, no waiting for full generation |
 | Model selection | Client-side dropdown | Model/provider resolved from config, no extra state management needed |
 | Syntax highlighting | Regex-based, no deps | Fast client-side code highlighting without heavyweight libraries |
+| Persistence | Debounced localStorage | Saves after 500ms of inactivity, not on every keystroke |
 
 ---
 
@@ -218,6 +238,7 @@ html              overflow: hidden
 |-------|--------|--------|
 | `aria-label` on send button | ✅ | `"Send message"` |
 | `aria-label` on sidebar toggle | ✅ | `"Open sidebar"` / `"Close sidebar"` |
+| `aria-label` on theme toggle | ✅ | `"Switch to light mode"` / `"Switch to dark mode"` |
 | `title` on sidebar buttons | ✅ | Matches `aria-label` for tooltip |
 | Keyboard focus indicators | ✅ | `.focus-ring` on all interactive elements |
 | `role="button"` on overlay | ✅ | Mobile backdrop is keyboard-dismissible |
@@ -225,6 +246,8 @@ html              overflow: hidden
 | `disabled` state | ✅ | All buttons respect `disabled` prop with visual + pointer-events feedback |
 | Color contrast | ✅ | Foreground tokens meet WCAG AA against backgrounds |
 | `aria-live` on messages | ✅ | `aria-live="polite"` announces new messages to screen readers |
+| Delete confirmation | ✅ | Inline confirmation prevents accidental deletion |
+| `prefers-reduced-motion` | ✅ | All animations and transitions disabled when requested |
 
 ---
 
@@ -232,9 +255,9 @@ html              overflow: hidden
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| API keys server-side only | ✅ | `GROQ_API_KEY` in `.env.local`, accessed only in API routes |
+| API keys server-side only | ✅ | `GROQ_API_KEY` and `OPENROUTER_API_KEY` in `.env.local`, accessed only in API routes |
 | No secrets in source | ✅ | `.env.local` gitignored, `.env.example` has placeholder only |
-| No `eval()` or `dangerouslySetInnerHTML` | ⚠️ | Markdown renderer uses `dangerouslySetInnerHTML` for assistant messages — HTML is generated server-side from markdown, not user input |
+| `dangerouslySetInnerHTML` | ⚠️ | Used for markdown-rendered assistant messages — HTML generated from markdown, not raw user input |
 | No external script loads | ✅ | Only Google Fonts via `next/font` |
 | Input sanitization | ✅ | React escapes user input in JSX; assistant content is markdown-rendered |
 
@@ -259,13 +282,13 @@ html              overflow: hidden
 
 ## 9. Issues Remaining
 
-### No Persistence
-
-Conversations and messages exist only in memory. Page refresh loses all data. Addressed in Phase 3/8.
-
 ### No Provider Fallback
 
-Multiple providers available (Groq, OpenRouter) but no automatic fallback chain. If one provider is down, the user must manually switch. Addressed in Phase 7.
+Multiple providers available (Groq, OpenRouter) but no automatic fallback chain. If one provider is down, the user must manually switch.
+
+### No Database
+
+Conversations persist via localStorage only. No server-side storage, no cross-device sync.
 
 ### No Tests
 
@@ -280,8 +303,8 @@ src/
   app/
     api/chat/route.ts       — Multi-provider streaming chat API endpoint
     global.css              — Theme variables, scrollbar styles, animations
-    layout.tsx              — Root layout (fonts, metadata)
-    page.tsx                — Main chat page (state management, API calls)
+    layout.tsx              — Root layout (fonts, metadata, theme script)
+    page.tsx                — Main chat page (state management, persistence, API calls)
   components/
     app-shell.tsx           — Sidebar + content layout wrapper
     button.tsx              — Reusable button primitive
@@ -289,7 +312,7 @@ src/
     message-list.tsx        — Scrollable message container with smart auto-scroll
     message.tsx             — Single message bubble with entrance animation
     model-selector.tsx      — Model/provider selection dropdown
-    sidebar.tsx             — Navigation drawer
+    sidebar.tsx             — Navigation drawer with theme toggle
     toast.tsx               — Toast notification component
   lib/
     ai/
@@ -299,8 +322,10 @@ src/
         index.ts            — Provider registry, model lookup functions
         groq.ts             — Groq provider implementation
         openrouter.ts       — OpenRouter provider implementation
+    conversations.ts        — localStorage persistence for conversations
     highlight.ts            — Regex-based syntax highlighter
     markdown.ts             — Lightweight markdown renderer
+    use-theme.ts            — Theme hook (light/dark toggle)
 
 docs/
     00-PROJECT-OVERVIEW.md

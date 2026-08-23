@@ -27,16 +27,18 @@
   - Stream responses
 - **Done when:** User sends a message and gets an AI response
 
-## Phase 3 — Conversation Management
+## Phase 3 — Conversation Management ✅
 
 - **Goal:** Store and manage conversations
 - **Tasks:**
   - Conversation state management
   - Message history display
   - Clear/new conversation
-- **Done when:** Conversations persist during session
+  - localStorage persistence
+  - Delete confirmation
+- **Done when:** Conversations persist across page refreshes
 
-## Phase 4 — Multiple AI Providers
+## Phase 4 — Multiple AI Providers ✅
 
 - **Goal:** Support multiple AI providers
 - **Tasks:**
@@ -45,7 +47,7 @@
   - Provider configuration
 - **Done when:** All providers work through the same interface
 
-## Phase 5 — Model Selection
+## Phase 5 — Model Selection ✅
 
 - **Goal:** Let users choose models
 - **Tasks:**
@@ -81,4 +83,5 @@
   - Performance optimization
   - Error monitoring
   - Deployment setup
+  - Tests
 - **Done when:** App is production-ready

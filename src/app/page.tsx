@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { MessageList, type MessageData } from "@/components/message-list";
 import { ChatInput } from "@/components/chat-input";
@@ -8,6 +8,7 @@ import { ModelSelector } from "@/components/model-selector";
 import { Toast } from "@/components/toast";
 import { getDefaultModel, getModelById } from "@/lib/ai";
 import { useTheme } from "@/lib/use-theme";
+import { loadConversations, saveConversations, type PersistedConversation } from "@/lib/conversations";
 
 interface Conversation {
   id: string;
@@ -34,9 +35,28 @@ function generateTitle(firstMessage: string): string {
   return trimmed.slice(0, 40).trimEnd() + "...";
 }
 
+function conversationsToPersisted(conversations: Conversation[]): PersistedConversation[] {
+  return conversations.map((c) => ({
+    id: c.id,
+    title: c.title,
+    messages: c.messages,
+    createdAt: c.createdAt,
+  }));
+}
+
+function persistedToConversations(persisted: PersistedConversation[]): Conversation[] {
+  return persisted.map((c) => ({
+    id: c.id,
+    title: c.title,
+    messages: c.messages,
+    createdAt: c.createdAt,
+  }));
+}
+
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [toasts, setToasts] = useState<ToastState[]>([]);
@@ -45,6 +65,28 @@ export default function Home() {
   activeIdRef.current = activeId;
   const selectedModelRef = useRef(selectedModel);
   selectedModelRef.current = selectedModel;
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const persisted = loadConversations();
+    if (persisted.length > 0) {
+      setConversations(persistedToConversations(persisted));
+    }
+    setLoaded(true);
+  }, []);
+
+  // Debounced save to localStorage
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  useEffect(() => {
+    if (!loaded) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveConversations(conversationsToPersisted(conversations));
+    }, 500);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [conversations, loaded]);
 
   const activeConversation = conversations.find((c) => c.id === activeId);
   const messages = activeConversation?.messages ?? [];
@@ -207,6 +249,19 @@ export default function Home() {
         );
       } finally {
         setIsLoading(false);
+        // Clean up empty assistant message if stream returned no content
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === convId
+              ? {
+                  ...c,
+                  messages: c.messages.filter(
+                    (m) => !(m.id === assistantId && m.content === ""),
+                  ),
+                }
+              : c,
+          ),
+        );
       }
     },
     [addToast],
@@ -225,7 +280,18 @@ export default function Home() {
       theme={theme}
       onToggleTheme={toggleTheme}
     >
-      {messages.length === 0 ? (
+      {!loaded ? (
+        /* Loading skeleton while hydrating from localStorage */
+        <div className="flex flex-1 items-center justify-center">
+          <div className="flex items-center gap-2 text-sm text-foreground-tertiary">
+            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="opacity-25" />
+              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="opacity-75" />
+            </svg>
+            Loading...
+          </div>
+        </div>
+      ) : messages.length === 0 ? (
         /* Empty state — centered greeting + input */
         <div className="flex flex-1 flex-col items-center justify-center px-4">
           <h2 className="mb-1.5 text-xl font-semibold tracking-tight text-foreground">

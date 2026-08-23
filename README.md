@@ -4,7 +4,21 @@ A web-based AI chat platform that gives users one unified interface to access mu
 
 ## Status
 
-✅ **Phase 5 Complete** — Chat UI + Multiple AI providers (Groq, OpenRouter) + Model selection.
+✅ **Phase 5 Complete** — Chat UI + Multiple AI providers (Groq, OpenRouter) + Model selection + Conversation persistence + Light/dark mode.
+
+## Features
+
+- Multi-provider AI chat (Groq, OpenRouter)
+- Model selector with grouped models by provider
+- Conversation persistence via localStorage
+- Light/dark mode toggle with system preference detection
+- Streaming AI responses
+- Markdown rendering with syntax highlighting
+- Copy message and code block buttons
+- Smart auto-scroll
+- Collapsible sidebar
+- Responsive design
+- Reduced motion support
 
 ## Tech Stack
 
@@ -63,7 +77,7 @@ multi-ai-chat/
 ├── src/
 │   ├── app/              # App Router pages + API routes
 │   ├── components/       # UI components
-│   └── lib/              # Utilities and AI providers
+│   └── lib/              # Utilities, AI providers, hooks
 ├── docs/                 # Project documentation
 ├── .env.example          # Environment variable template
 ├── AGENTS.md             # AI assistant instructions
@@ -79,6 +93,7 @@ multi-ai-chat/
 - [Tech Stack](docs/02-TECH-STACK.md)
 - [Architecture](docs/03-ARCHITECTURE.md)
 - [Roadmap](docs/07-ROADMAP.md)
+- [System Features](docs/08-SYSTEM-FEATURES.md)
 
 ## License
 

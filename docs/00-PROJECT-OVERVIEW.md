@@ -11,29 +11,31 @@ Build a single chat interface where users can:
 - Get automatic fallback when a provider is unavailable
 - Use free-tier models by default
 
-## What's Included (Now)
+## What's Included
 
-- Next.js project foundation with TypeScript, Tailwind CSS, ESLint
+- Next.js 15 project with TypeScript, Tailwind CSS, ESLint, Prettier
 - App Router structure
 - Clean, scalable folder layout
 - Chat UI with auto-resizing textarea
 - Message display (user bubbles, assistant text, loading indicator)
 - Smart auto-scroll with manual scroll detection
 - Collapsible sidebar with conversation list
-- Dark mode support
+- Conversation persistence via localStorage
+- Light/dark mode toggle with system preference detection
 - Responsive layout with overflow containment
-- Groq AI integration with streaming responses
+- Multi-provider AI support (Groq, OpenRouter) with provider abstraction
+- Model selector UI with grouped models by provider
 - Markdown rendering with syntax highlighting
 - Copy message and code block buttons
 - Toast notifications for errors
+- Delete confirmation for conversations
+- Reduced motion support
 
 ## What's NOT Included Yet
 
-- No conversation storage/persistence
+- No provider routing or fallback chain
 - No authentication
-- No database
-- No provider routing or fallback
-- No error handling/retry logic
+- No database (uses localStorage)
 - No tests
 
 ## Core Principles

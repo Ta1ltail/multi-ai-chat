@@ -21,15 +21,28 @@
 - **FR-18** — Collapsible sidebar with conversation list
 - **FR-19** — Empty state shows greeting + centered input
 
+### Phase 2 — Single AI Provider ✅
+
+- **FR-30** — API route streams AI responses via SSE
+- **FR-31** — Groq integration with free-tier models
+
+### Phase 3 — Conversation Management ✅
+
+- **FR-40** — Conversations persist via localStorage
+- **FR-41** — New chat creation
+- **FR-42** — Conversation deletion with confirmation
+- **FR-43** — Message history display
+
 ### Phase 4-5 — Multiple Providers + Model Selection ✅
 
 - **FR-20** — Users can select an AI model
 - **FR-21** — Users can switch between providers
+- **FR-50** — Provider abstraction layer (Groq, OpenRouter)
+- **FR-51** — Model selector UI with grouped models
 
-### Planned
+### Phase 6+ — Planned
 
 - **FR-22** — System falls back to another provider if one fails
-- **FR-23** — Users can view conversation history (persisted)
 - **FR-24** — System auto-selects the best available free model
 
 ## Non-Functional Requirements

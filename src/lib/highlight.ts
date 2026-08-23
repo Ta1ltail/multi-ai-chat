@@ -192,8 +192,3 @@ export function getHighlightedCode(code: string, lang: string): string {
   return highlightCode(code, lang);
 }
 
-export function getLanguageDisplayName(lang: string): string {
-  const normalizedLang = lang.toLowerCase().trim();
-  const langKey = aliases[normalizedLang] ?? normalizedLang;
-  return languages[langKey]?.name ?? lang;
-}
