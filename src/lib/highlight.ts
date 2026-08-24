@@ -53,7 +53,7 @@ const languages: Record<string, LanguageDef> = {
     patterns: [
       { regex: /(<!--[\s\S]*?-->)/g, className: "hljs-comment" },
       { regex: /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g, className: "hljs-string" },
-      { regex: /(&lt;\/?)([\w-]+)/g, className: "hljs-tag" },
+      { regex: /(<(\/)?)([\w-]+)/g, className: "hljs-tag" },
       { regex: /\b([a-zA-Z-]+)(?==)/g, className: "hljs-attribute" },
     ],
   },
@@ -127,25 +127,20 @@ function highlightCode(code: string, lang: string): string {
   const langKey = aliases[normalizedLang] ?? normalizedLang;
   const language = languages[langKey] ?? languages.plaintext;
 
-  // Escape HTML first — every match below is computed against this
-  // escaped text, and ONLY this text. We never re-scan text we've already
-  // inserted spans into (that was the bug: a "keyword" pattern matching
-  // the literal word `class` inside a `class="hljs-string"` attribute we
-  // had just inserted, corrupting the markup).
-  const escaped = escapeHtml(code);
-
   if (language.patterns.length === 0) {
-    return escaped;
+    return escapeHtml(code);
   }
 
-  // Collect every match from every pattern against the original text.
+  // Run regex patterns against the ORIGINAL (unescaped) code so that
+  // patterns like string delimiters (" ' `) match correctly.
+  // We then map positions to the escaped text when building output.
   const matches: HighlightMatch[] = [];
 
   language.patterns.forEach((pattern, priority) => {
     const flags = pattern.regex.flags.includes("g") ? pattern.regex.flags : `${pattern.regex.flags}g`;
     const regex = new RegExp(pattern.regex.source, flags);
     let match: RegExpExecArray | null;
-    while ((match = regex.exec(escaped)) !== null) {
+    while ((match = regex.exec(code)) !== null) {
       if (match[0].length === 0) {
         regex.lastIndex += 1;
         continue;
@@ -159,28 +154,29 @@ function highlightCode(code: string, lang: string): string {
     }
   });
 
-  // Earliest match wins; ties go to whichever pattern appears first in the
-  // language definition (comments/strings are listed before keywords, etc.,
-  // so they correctly take priority over a keyword match inside them).
+  // Earliest match wins; ties go to whichever pattern appears first.
   matches.sort((a, b) => a.start - b.start || a.priority - b.priority);
 
+  // Resolve overlapping matches — keep the first/highest-priority one.
   const resolved: HighlightMatch[] = [];
   let lastEnd = 0;
   for (const match of matches) {
-    if (match.start < lastEnd) continue; // overlaps a match we already kept
+    if (match.start < lastEnd) continue;
     resolved.push(match);
     lastEnd = match.end;
   }
 
-  // Build the final string in a single left-to-right pass.
+  // Build the final string: escape non-matched segments, escape matched
+  // segments too, and wrap matched segments in <span> tags. This avoids
+  // the old bug of re-scanning text that already contains span attributes.
   let result = "";
   let cursor = 0;
   for (const match of resolved) {
-    result += escaped.slice(cursor, match.start);
-    result += `<span class="${match.className}">${escaped.slice(match.start, match.end)}</span>`;
+    result += escapeHtml(code.slice(cursor, match.start));
+    result += `<span class="${match.className}">${escapeHtml(code.slice(match.start, match.end))}</span>`;
     cursor = match.end;
   }
-  result += escaped.slice(cursor);
+  result += escapeHtml(code.slice(cursor));
 
   return result;
 }

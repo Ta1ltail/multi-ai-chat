@@ -7,6 +7,7 @@ export const OPENROUTER_MODELS = [
     provider: "openrouter",
     maxTokens: 2048,
     contextLength: 1000000,
+    priority: 80,
   },
   {
     id: "nvidia/nemotron-3-super-120b-a12b:free",
@@ -14,6 +15,7 @@ export const OPENROUTER_MODELS = [
     provider: "openrouter",
     maxTokens: 2048,
     contextLength: 262144,
+    priority: 75,
   },
   {
     id: "google/gemma-4-31b-it:free",
@@ -21,6 +23,7 @@ export const OPENROUTER_MODELS = [
     provider: "openrouter",
     maxTokens: 2048,
     contextLength: 262144,
+    priority: 65,
   },
   {
     id: "google/gemma-4-26b-a4b-it:free",
@@ -28,6 +31,7 @@ export const OPENROUTER_MODELS = [
     provider: "openrouter",
     maxTokens: 2048,
     contextLength: 262144,
+    priority: 55,
   },
   {
     id: "nvidia/nemotron-3-nano-30b-a3b:free",
@@ -35,6 +39,7 @@ export const OPENROUTER_MODELS = [
     provider: "openrouter",
     maxTokens: 2048,
     contextLength: 256000,
+    priority: 40,
   },
 ] as const;
 

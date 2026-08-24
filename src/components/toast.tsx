@@ -43,10 +43,7 @@ export function Toast({ message, type = "error", onClose }: ToastProps) {
       <div className="flex items-center gap-3">
         <span className="flex-1 text-sm leading-snug">{message}</span>
         <button
-          onClick={() => {
-            setIsVisible(false);
-            setTimeout(() => onCloseRef.current(), 300);
-          }}
+          onClick={() => setIsVisible(false)}
           className="text-foreground-tertiary hover:text-foreground shrink-0 transition-colors duration-100"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

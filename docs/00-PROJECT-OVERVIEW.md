@@ -36,7 +36,6 @@ Build a single chat interface where users can:
 - No provider routing or fallback chain
 - No authentication
 - No database (uses localStorage)
-- No tests
 
 ## Core Principles
 

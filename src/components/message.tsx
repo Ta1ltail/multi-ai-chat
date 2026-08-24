@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { renderMarkdown } from "@/lib/markdown";
+import { sanitizeHTML } from "@/lib/sanitize";
 
 interface MessageProps {
   role: "user" | "assistant";
@@ -119,7 +120,7 @@ export function Message({ role, content, loading }: MessageProps) {
       <div
         ref={contentRef}
         className="text-foreground w-full min-w-0 text-[15px] leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHTML(renderMarkdown(content)) }}
       />
       {copyButton && <div className="mt-1">{copyButton}</div>}
     </div>

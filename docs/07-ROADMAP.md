@@ -56,7 +56,7 @@
   - Model configuration
 - **Done when:** Users can switch between models freely
 
-## Phase 6 — Auto Routing
+## Phase 6 — Auto Routing ✅
 
 - **Goal:** Automatically pick the best provider
 - **Tasks:**

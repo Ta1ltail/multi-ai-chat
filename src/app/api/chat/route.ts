@@ -1,5 +1,12 @@
 import { type NextRequest } from "next/server";
-import { getProviderOrThrow, getDefaultModel, SYSTEM_PROMPT } from "@/lib/ai";
+import {
+  getProviderOrThrow,
+  getDefaultModel,
+  SYSTEM_PROMPT,
+  AUTO_MODEL_ID,
+  getAvailableProviders,
+  selectBestModel,
+} from "@/lib/ai";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,8 +20,18 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Messages array is required" }, { status: 400 });
     }
 
-    const resolvedModel = model ?? getDefaultModel().id;
-    const resolvedProvider = provider ?? getDefaultModel().provider;
+    let resolvedModel: string;
+    let resolvedProvider: string;
+
+    if (model === AUTO_MODEL_ID) {
+      const available = getAvailableProviders();
+      const best = selectBestModel(available);
+      resolvedModel = best.id;
+      resolvedProvider = best.provider;
+    } else {
+      resolvedModel = model ?? getDefaultModel().id;
+      resolvedProvider = provider ?? getDefaultModel().provider;
+    }
 
     const aiProvider = getProviderOrThrow(resolvedProvider);
 

@@ -40,10 +40,13 @@
 - **FR-50** — Provider abstraction layer (Groq, OpenRouter)
 - **FR-51** — Model selector UI with grouped models
 
-### Phase 6+ — Planned
+### Phase 6 — Auto Routing ✅
+
+- **FR-24** — System auto-selects the best available free model
+
+### Phase 7+ — Planned
 
 - **FR-22** — System falls back to another provider if one fails
-- **FR-24** — System auto-selects the best available free model
 
 ## Non-Functional Requirements
 

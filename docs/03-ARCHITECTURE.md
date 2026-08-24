@@ -19,7 +19,9 @@ Page Components (page.tsx)
 ## Data Flow
 
 ```
-User → Chat UI → API Route → Provider Router → Groq / OpenRouter
+User → Chat UI (model: "auto" or specific) → API Route
+  ├── Auto mode: router.ts selects best model → Provider → Groq / OpenRouter
+  └── Manual mode: specific model → Provider → Groq / OpenRouter
                 ↓
          localStorage (persistence)
 ```
@@ -28,6 +30,7 @@ User → Chat UI → API Route → Provider Router → Groq / OpenRouter
 
 - **API routes handle AI calls** — secret keys never reach the client
 - **Provider abstraction** — easy to add new providers without changing UI
+- **Auto-routing** — server picks the best model based on API key availability + priority scores
 - **localStorage persistence** — conversations survive page refresh, no database needed
 - **Class-based dark mode** — `.dark` class on `<html>`, toggled via React state
 - **Free-tier first** — default to free models, upgrade optional
@@ -40,7 +43,7 @@ User → Chat UI → API Route → Provider Router → Groq / OpenRouter
 RootLayout (layout.tsx)
   └── Home (page.tsx)
         ├── useTheme() — light/dark mode state
-        ├── loadConversations() — localStorage hydration
+        ├── useChat() — conversation state, send, persistence
         └── AppShell (app-shell.tsx)
               ├── Sidebar (sidebar.tsx)
               │     ├── Button (button.tsx)
@@ -56,30 +59,44 @@ RootLayout (layout.tsx)
 
 ```
 src/
+  types/
+    index.ts                — Shared types (MessageData, Conversation, ToastState)
   app/
     api/chat/route.ts       — Multi-provider streaming chat endpoint
+    error.tsx               — Error boundary with reset
+    loading.tsx             — Loading skeleton
     global.css              — Theme variables, animations, syntax highlighting
     layout.tsx              — Root layout (fonts, metadata, theme script)
-    page.tsx                — Main chat page (state, persistence, API calls)
+    page.tsx                — Main chat page (UI concerns only)
   components/
     app-shell.tsx           — Sidebar + content layout wrapper
     button.tsx              — Reusable button primitive
     chat-input.tsx          — Auto-resizing textarea + send button
-    message.tsx             — Single message bubble
+    message.tsx             — Single message bubble with markdown + copy
     message-list.tsx        — Scrollable message container
     model-selector.tsx      — Model/provider dropdown
     sidebar.tsx             — Navigation drawer with theme toggle
     toast.tsx               — Toast notification
   lib/
+    use-chat.ts             — Chat state hook (conversations, send, persistence)
+    sanitize.ts             — DOMPurify HTML sanitizer for markdown output
     ai/
-      index.ts              — Public API, system prompt
+      index.ts              — Public API, system prompt, router exports
+      router.ts             — Auto-routing: selectBestModel(), getAvailableProviders()
       providers/
         types.ts            — AIProvider, ModelConfig, StreamOptions
         index.ts            — Provider registry, model lookup
         groq.ts             — Groq provider
         openrouter.ts       — OpenRouter provider
     conversations.ts        — localStorage persistence
-    highlight.ts            — Syntax highlighting
+    highlight.ts            — Regex-based syntax highlighting
     markdown.ts             — Markdown renderer
+    sse.ts                  — Client-side SSE stream reader
     use-theme.ts            — Theme hook (light/dark toggle)
+  lib/__tests__/
+    highlight.test.ts       — Syntax highlighting tests
+    markdown.test.ts        — Markdown renderer tests
+    conversations.test.ts   — localStorage persistence tests
+    sanitize.test.ts        — HTML sanitizer tests
+    router.test.ts          — Auto-routing tests (11 tests)
 ```

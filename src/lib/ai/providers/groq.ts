@@ -16,6 +16,7 @@ export const GROQ_MODELS = [
     provider: "groq",
     maxTokens: 2048,
     contextLength: 131072,
+    priority: 90,
   },
   {
     id: "openai/gpt-oss-20b",
@@ -23,6 +24,7 @@ export const GROQ_MODELS = [
     provider: "groq",
     maxTokens: 2048,
     contextLength: 131072,
+    priority: 70,
   },
   {
     id: "groq/compound",
@@ -30,6 +32,7 @@ export const GROQ_MODELS = [
     provider: "groq",
     maxTokens: 2048,
     contextLength: 131072,
+    priority: 60,
   },
   {
     id: "groq/compound-mini",
@@ -37,6 +40,7 @@ export const GROQ_MODELS = [
     provider: "groq",
     maxTokens: 2048,
     contextLength: 131072,
+    priority: 50,
   },
 ] as const;
 

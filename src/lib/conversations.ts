@@ -3,15 +3,10 @@
  * Handles read/write errors gracefully and enforces a storage limit.
  */
 
+import type { Conversation } from "@/types";
+
 const STORAGE_KEY = "conversations";
 const MAX_CONVERSATIONS = 100;
-
-export interface Conversation {
-  id: string;
-  title: string;
-  messages: Array<{ id: string; role: "user" | "assistant"; content: string }>;
-  createdAt: number;
-}
 
 export function loadConversations(): Conversation[] {
   if (typeof window === "undefined") return [];

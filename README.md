@@ -19,6 +19,10 @@ A web-based AI chat platform that gives users one unified interface to access mu
 - Collapsible sidebar
 - Responsive design
 - Reduced motion support
+- HTML sanitization (DOMPurify) for safe markdown rendering
+- Request cancellation (AbortController)
+- Error boundary and loading states
+- 33 unit tests (Vitest)
 
 ## Tech Stack
 
@@ -68,6 +72,7 @@ Open [http://localhost:3000](http://localhost:3000)
 npm run lint        # Run ESLint
 npx tsc --noEmit    # Type check
 npm run build       # Production build
+npm test            # Run unit tests
 ```
 
 ## Project Structure

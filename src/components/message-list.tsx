@@ -2,12 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { Message } from "./message";
-
-export interface MessageData {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-}
+import type { MessageData } from "@/types";
 
 interface MessageListProps {
   messages: MessageData[];

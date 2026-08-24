@@ -1,70 +1,46 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { MessageList, type MessageData } from "@/components/message-list";
+import { MessageList } from "@/components/message-list";
 import { ChatInput } from "@/components/chat-input";
 import { ModelSelector } from "@/components/model-selector";
 import { Toast } from "@/components/toast";
-import { getDefaultModel, getModelById } from "@/lib/ai";
+import { AUTO_MODEL_ID } from "@/lib/ai";
 import { useTheme } from "@/lib/use-theme";
-import { readSSEStream } from "@/lib/sse";
-import { loadConversations, saveConversations, type Conversation } from "@/lib/conversations";
+import { useChat } from "@/lib/use-chat";
+import type { ToastState } from "@/types";
 
-interface ToastState {
-  id: number;
-  message: string;
-  type: "error" | "success" | "info";
-}
+const MODEL_STORAGE_KEY = "selectedModel";
 
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
-
-function generateTitle(firstMessage: string): string {
-  const trimmed = firstMessage.trim();
-  if (trimmed.length <= 40) return trimmed;
-  return trimmed.slice(0, 40).trimEnd() + "...";
+function getStoredModel(): string {
+  if (typeof window === "undefined") return AUTO_MODEL_ID;
+  try {
+    const stored = localStorage.getItem(MODEL_STORAGE_KEY);
+    if (stored) return stored;
+  } catch {
+    // ignore
+  }
+  return AUTO_MODEL_ID;
 }
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    conversations,
+    activeId,
+    messages,
+    isLoading,
+    loaded,
+    handleNewChat,
+    handleSelectConversation,
+    handleDeleteConversation,
+    handleSend,
+  } = useChat();
+
   const [toasts, setToasts] = useState<ToastState[]>([]);
-  const [selectedModel, setSelectedModel] = useState(getDefaultModel().id);
+  const [selectedModel, setSelectedModel] = useState(getStoredModel);
   const toastCounterRef = useRef(0);
-  const activeIdRef = useRef(activeId);
-  activeIdRef.current = activeId;
-  const selectedModelRef = useRef(selectedModel);
-  selectedModelRef.current = selectedModel;
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    const persisted = loadConversations();
-    if (persisted.length > 0) {
-      setConversations(persisted);
-    }
-    setLoaded(true);
-  }, []);
-
-  // Debounced save to localStorage
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
-  useEffect(() => {
-    if (!loaded) return;
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => {
-      saveConversations(conversations);
-    }, 500);
-    return () => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    };
-  }, [conversations, loaded]);
-
-  const activeConversation = conversations.find((c) => c.id === activeId);
-  const messages = activeConversation?.messages ?? [];
 
   const addToast = useCallback((message: string, type: ToastState["type"] = "error") => {
     const id = ++toastCounterRef.current;
@@ -75,148 +51,24 @@ export default function Home() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const handleNewChat = useCallback(() => {
-    setActiveId(null);
+  const handleSelectModel = useCallback((modelId: string) => {
+    setSelectedModel(modelId);
+    try {
+      localStorage.setItem(MODEL_STORAGE_KEY, modelId);
+    } catch {
+      // ignore
+    }
   }, []);
 
-  const handleSelectConversation = useCallback((id: string) => {
-    setActiveId(id);
-  }, []);
-
-  const handleDeleteConversation = useCallback(
-    (id: string) => {
-      setConversations((prev) => prev.filter((c) => c.id !== id));
-      if (activeIdRef.current === id) {
-        setActiveId(null);
-      }
-    },
-    [],
-  );
-
-  const handleSend = useCallback(
+  const handleSendWithModel = useCallback(
     async (content: string) => {
-      // Create a new conversation if none is active
-      let convId = activeIdRef.current;
-      if (!convId) {
-        convId = generateId();
-        const newConv: Conversation = {
-          id: convId,
-          title: generateTitle(content),
-          messages: [],
-          createdAt: Date.now(),
-        };
-        setConversations((prev) => [newConv, ...prev]);
-        setActiveId(convId);
-      }
-
-      const userMsg: MessageData = {
-        id: generateId(),
-        role: "user",
-        content,
-      };
-
-      const assistantId = generateId();
-      const assistantMsg: MessageData = {
-        id: assistantId,
-        role: "assistant",
-        content: "",
-      };
-
-      // Capture conversation history BEFORE updating state to avoid stale closure.
-      let historyMessages: MessageData[] = [];
-      setConversations((prev) => {
-        const conv = prev.find((c) => c.id === convId);
-        historyMessages = conv?.messages ?? [];
-        const currentMessages = historyMessages;
-        const updatedMessages = [...currentMessages, userMsg, assistantMsg];
-
-        const title =
-          conv && conv.messages.length === 0 ? generateTitle(content) : conv?.title ?? "";
-
-        return prev.map((c) =>
-          c.id === convId ? { ...c, title, messages: updatedMessages } : c,
-        );
-      });
-
-      setIsLoading(true);
-
       try {
-        const apiMessages = [...historyMessages, userMsg].map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
-
-        // Resolve provider from model config
-        const modelId = selectedModelRef.current;
-        const modelConfig = getModelById(modelId);
-        const providerId = modelConfig?.provider ?? "groq";
-
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: apiMessages, provider: providerId, model: modelId }),
-        });
-
-        if (!res.ok) {
-          throw new Error(`API error: ${res.status}`);
-        }
-
-        let fullText = "";
-        await readSSEStream(
-          res,
-          (event) => {
-            if (event.text) {
-              fullText += event.text;
-              const currentFullText = fullText;
-              setConversations((prev) =>
-                prev.map((c) =>
-                  c.id === convId
-                    ? {
-                        ...c,
-                        messages: c.messages.map((m) =>
-                          m.id === assistantId ? { ...m, content: currentFullText } : m,
-                        ),
-                      }
-                    : c,
-                ),
-              );
-            }
-          },
-          () => {},
-        );
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : "Failed to get response";
-        addToast(errorMsg);
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === convId
-              ? {
-                  ...c,
-                  messages: c.messages.map((m) =>
-                    m.id === assistantId ? { ...m, content: `Error: ${errorMsg}` } : m,
-                  ),
-                }
-              : c,
-          ),
-        );
-      } finally {
-        setIsLoading(false);
-        // Clean up empty assistant message if stream returned no content
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === convId
-              ? {
-                  ...c,
-                  messages: c.messages.filter(
-                    (m) => !(m.id === assistantId && m.content === ""),
-                  ),
-                }
-              : c,
-          ),
-        );
+        await handleSend(content, selectedModel);
+      } catch {
+        addToast("Failed to get response");
       }
     },
-    [addToast],
+    [handleSend, selectedModel, addToast],
   );
 
   return (
@@ -254,11 +106,11 @@ export default function Home() {
             <div className="mb-2 flex justify-center">
               <ModelSelector
                 selectedModel={selectedModel}
-                onSelectModel={setSelectedModel}
+                onSelectModel={handleSelectModel}
                 disabled={isLoading}
               />
             </div>
-            <ChatInput onSend={handleSend} disabled={isLoading} />
+            <ChatInput onSend={handleSendWithModel} disabled={isLoading} />
           </div>
         </div>
       ) : (
@@ -268,12 +120,12 @@ export default function Home() {
             <div className="mx-auto max-w-3xl">
               <ModelSelector
                 selectedModel={selectedModel}
-                onSelectModel={setSelectedModel}
+                onSelectModel={handleSelectModel}
                 disabled={isLoading}
               />
             </div>
           </div>
-          <ChatInput onSend={handleSend} disabled={isLoading} />
+          <ChatInput onSend={handleSendWithModel} disabled={isLoading} />
         </>
       )}
 

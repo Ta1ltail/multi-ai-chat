@@ -49,10 +49,35 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 
 | File | Role |
 |------|------|
+| `src/lib/use-chat.ts` | Chat state hook: conversations, send, persistence |
+| `src/lib/sanitize.ts` | DOMPurify HTML sanitizer for markdown output |
 | `src/lib/conversations.ts` | localStorage persistence for conversations |
 | `src/lib/use-theme.ts` | Theme hook: light/dark toggle with localStorage |
 | `src/lib/highlight.ts` | Regex-based syntax highlighting |
 | `src/lib/markdown.ts` | Lightweight markdown renderer |
+| `src/lib/sse.ts` | Client-side SSE stream reader |
+
+### Types
+
+| File | Role |
+|------|------|
+| `src/types/index.ts` | Shared type definitions: MessageData, Conversation, ToastState |
+
+### Error Handling
+
+| File | Role |
+|------|------|
+| `src/app/error.tsx` | Error boundary with reset button |
+| `src/app/loading.tsx` | Loading skeleton |
+
+### Tests
+
+| File | Role |
+|------|------|
+| `src/lib/__tests__/highlight.test.ts` | Syntax highlighting tests (12 tests) |
+| `src/lib/__tests__/markdown.test.ts` | Markdown renderer tests (10 tests) |
+| `src/lib/__tests__/conversations.test.ts` | localStorage persistence tests (6 tests) |
+| `src/lib/__tests__/sanitize.test.ts` | HTML sanitizer tests (5 tests) |
 
 ---
 
@@ -108,7 +133,7 @@ Complete audit of the Multi AI Chat system — every component, behavior, and de
 | Delete confirmation | ✅ | Inline "Delete / Cancel" confirmation before deletion |
 | Empty list state | ✅ | "No conversations yet" message |
 | Theme toggle | ✅ | Sun/moon icon in footer, toggles light/dark mode |
-| Version footer | ✅ | `v0.1.0` in footer |
+| Version footer | ✅ | `v0.3.0` in footer |
 
 ### 2.5 Model Selection
 
@@ -257,7 +282,7 @@ html              overflow: hidden
 |-------|--------|--------|
 | API keys server-side only | ✅ | `GROQ_API_KEY` and `OPENROUTER_API_KEY` in `.env.local`, accessed only in API routes |
 | No secrets in source | ✅ | `.env.local` gitignored, `.env.example` has placeholder only |
-| `dangerouslySetInnerHTML` | ⚠️ | Used for markdown-rendered assistant messages — HTML generated from markdown, not raw user input |
+| `dangerouslySetInnerHTML` | ✅ | Used for markdown-rendered assistant messages — output sanitized via DOMPurify with strict allowlist |
 | No external script loads | ✅ | Only Google Fonts via `next/font` |
 | Input sanitization | ✅ | React escapes user input in JSX; assistant content is markdown-rendered |
 
@@ -290,31 +315,33 @@ Multiple providers available (Groq, OpenRouter) but no automatic fallback chain.
 
 Conversations persist via localStorage only. No server-side storage, no cross-device sync.
 
-### No Tests
-
-Zero test files. Phase 8 scope.
-
 ---
 
 ## 10. File Tree Summary
 
 ```
 src/
+  types/
+    index.ts                — Shared types (MessageData, Conversation, ToastState)
   app/
     api/chat/route.ts       — Multi-provider streaming chat API endpoint
+    error.tsx               — Error boundary with reset
+    loading.tsx             — Loading skeleton
     global.css              — Theme variables, scrollbar styles, animations
     layout.tsx              — Root layout (fonts, metadata, theme script)
-    page.tsx                — Main chat page (state management, persistence, API calls)
+    page.tsx                — Main chat page (UI only, uses useChat hook)
   components/
     app-shell.tsx           — Sidebar + content layout wrapper
     button.tsx              — Reusable button primitive
     chat-input.tsx          — Auto-resizing textarea + send button
     message-list.tsx        — Scrollable message container with smart auto-scroll
-    message.tsx             — Single message bubble with entrance animation
+    message.tsx             — Single message bubble with markdown + copy
     model-selector.tsx      — Model/provider selection dropdown
     sidebar.tsx             — Navigation drawer with theme toggle
     toast.tsx               — Toast notification component
   lib/
+    use-chat.ts             — Chat state hook (conversations, send, abort)
+    sanitize.ts             — DOMPurify HTML sanitizer
     ai/
       index.ts              — Public API: re-exports, system prompt
       providers/
@@ -325,7 +352,13 @@ src/
     conversations.ts        — localStorage persistence for conversations
     highlight.ts            — Regex-based syntax highlighter
     markdown.ts             — Lightweight markdown renderer
+    sse.ts                  — Client-side SSE stream reader
     use-theme.ts            — Theme hook (light/dark toggle)
+  lib/__tests__/
+    highlight.test.ts       — Syntax highlighting tests
+    markdown.test.ts        — Markdown renderer tests
+    conversations.test.ts   — localStorage persistence tests
+    sanitize.test.ts        — HTML sanitizer tests
 
 docs/
     00-PROJECT-OVERVIEW.md

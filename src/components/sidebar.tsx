@@ -129,7 +129,7 @@ export function Sidebar({
 
       {/* Footer */}
       <div className="flex items-center justify-between px-4 py-3">
-        <p className="text-[11px] text-foreground-tertiary/60">v0.1.0</p>
+        <p className="text-[11px] text-foreground-tertiary/60">v0.3.0</p>
         <button
           onClick={onToggleTheme}
           aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}

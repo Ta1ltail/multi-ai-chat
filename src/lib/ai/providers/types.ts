@@ -10,6 +10,8 @@ export interface ModelConfig {
   provider: string;
   maxTokens: number;
   contextLength: number;
+  /** Higher = preferred by auto-router (0-100). */
+  priority: number;
 }
 
 export interface ChatMessage {
