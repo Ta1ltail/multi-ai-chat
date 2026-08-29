@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "./button";
 
 interface SidebarProps {
@@ -21,6 +21,45 @@ export function Sidebar({
   onToggleTheme,
 }: SidebarProps) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  // Focus the Delete button when confirm popover opens
+  useEffect(() => {
+    if (confirmDeleteId) {
+      // Small delay to let the popover render
+      const timer = setTimeout(() => deleteButtonRef.current?.focus(), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [confirmDeleteId]);
+
+  // Escape key to dismiss confirm popover
+  useEffect(() => {
+    if (!confirmDeleteId) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setConfirmDeleteId(null);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [confirmDeleteId]);
+
+  // Outside-click to dismiss confirm popover
+  useEffect(() => {
+    if (!confirmDeleteId) return;
+
+    function handleMouseDown(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setConfirmDeleteId(null);
+      }
+    }
+
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [confirmDeleteId]);
 
   return (
     <div className="flex h-full flex-col">
@@ -77,8 +116,15 @@ export function Sidebar({
 
                 {/* Delete button or inline confirm */}
                 {confirmDeleteId === conv.id ? (
-                  <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 rounded-md bg-surface shadow-sm border border-border-separator">
+                  <div
+                    ref={popoverRef}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 rounded-md bg-surface shadow-sm border border-border-separator"
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setConfirmDeleteId(null);
+                    }}
+                  >
                     <button
+                      ref={deleteButtonRef}
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteConversation(conv.id);
@@ -110,8 +156,8 @@ export function Sidebar({
                     title="Delete conversation"
                     className={`focus-ring text-foreground-tertiary hover:text-error absolute right-1 top-1/2 -translate-y-1/2 inline-flex h-6 w-6 items-center justify-center rounded-md transition-all duration-100 hover:bg-error-bg ${
                       conv.active
-                        ? "opacity-60 hover:opacity-100"
-                        : "opacity-0 group-hover:opacity-60 hover:!opacity-100"
+                        ? "opacity-60 hover:opacity-100 focus-visible:opacity-100"
+                        : "opacity-0 group-hover:opacity-60 group-focus-within:opacity-60 hover:!opacity-100 focus-visible:opacity-100"
                     }`}
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

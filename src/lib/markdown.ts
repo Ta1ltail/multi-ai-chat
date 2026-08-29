@@ -2,6 +2,10 @@
  * Lightweight markdown renderer for chat messages.
  * Handles: code blocks, inline code, bold, italic, links, lists, line breaks.
  * No external dependencies.
+ *
+ * Uses a sentinel-based approach: code blocks are extracted to unique
+ * placeholders before inline passes, then restored afterward. This
+ * prevents bold/italic/link regexes from mutating code content.
  */
 
 import { getHighlightedCode } from "./highlight";
@@ -32,15 +36,21 @@ function safeUrl(raw: string): string {
   return "#";
 }
 
+/** Sentinel prefix used to mark extracted code block placeholders. */
+const SENTINEL_PREFIX = "\u0000CODEBLOCK_";
+
 export function renderMarkdown(text: string): string {
   let html = text;
 
-  // Code blocks (``` ... ```)
+  // ── Step 1: Extract code blocks to sentinels ──
+  // This prevents inline passes from mutating code content.
+  const sentinels: string[] = [];
+
   html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
     const language = lang || "text";
     const highlighted = getHighlightedCode(code.trim(), language);
 
-    return `<div class="code-block-wrapper my-3">
+    const block = `<div class="code-block-wrapper my-3">
       <div class="code-block overflow-hidden rounded-lg border border-border-separator bg-surface-elevated">
         <pre class="overflow-x-auto p-4 text-[13px] leading-relaxed"><code class="font-mono text-foreground">${highlighted}</code></pre>
       </div>
@@ -51,7 +61,13 @@ export function renderMarkdown(text: string): string {
         </button>
       </div>
     </div>`;
+
+    const sentinel = `${SENTINEL_PREFIX}${sentinels.length}\u0000`;
+    sentinels.push(block);
+    return sentinel;
   });
+
+  // ── Step 2: Inline passes (safe — code blocks are extracted) ──
 
   // Inline code (` ... `)
   html = html.replace(
@@ -83,8 +99,13 @@ export function renderMarkdown(text: string): string {
     (match) => `<ol class="my-2 space-y-1">${match}</ol>`,
   );
 
-  // Line breaks (but not inside pre tags)
+  // Line breaks (but not inside sentinels or pre tags)
   html = html.replace(/(?<!<\/pre>)\n(?!<)/g, "<br>");
+
+  // ── Step 3: Restore code block sentinels ──
+  for (let i = 0; i < sentinels.length; i++) {
+    html = html.replace(`${SENTINEL_PREFIX}${i}\u0000`, sentinels[i]);
+  }
 
   return html;
 }

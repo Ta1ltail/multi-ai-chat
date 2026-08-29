@@ -8,14 +8,30 @@ const STORAGE_KEY = "theme";
 
 function getSystemTheme(): Theme {
   if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  try {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  } catch {
+    return "light";
+  }
 }
 
 function getStoredTheme(): Theme | null {
   if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === "light" || stored === "dark") return stored;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "light" || stored === "dark") return stored;
+  } catch {
+    // Safari private mode or storage quota — ignore
+  }
   return null;
+}
+
+function storeTheme(theme: Theme): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    // Safari private mode or storage quota — ignore
+  }
 }
 
 function applyTheme(theme: Theme) {
@@ -54,13 +70,12 @@ export function useTheme() {
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next = prev === "light" ? "dark" : "light";
-      localStorage.setItem(STORAGE_KEY, next);
-      applyTheme(next);
-      return next;
-    });
-  }, []);
+    // Compute next theme outside state updater to avoid side effects in updater
+    const next = theme === "light" ? "dark" : "light";
+    setTheme(next);
+    applyTheme(next);
+    storeTheme(next);
+  }, [theme]);
 
   return { theme, toggleTheme };
 }

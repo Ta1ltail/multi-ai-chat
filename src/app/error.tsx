@@ -13,7 +13,7 @@ export default function Error({ error, reset }: ErrorProps) {
   }, [error]);
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-4">
+    <div className="flex h-dvh flex-col items-center justify-center px-4">
       <div className="text-center">
         <h2 className="mb-2 text-xl font-semibold text-foreground">Something went wrong</h2>
         <p className="mb-6 text-sm text-foreground-tertiary">

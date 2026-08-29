@@ -42,6 +42,8 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    // Skip during IME composition (CJK input methods)
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
@@ -68,8 +70,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
             placeholder="Message..."
             rows={1}
             maxLength={MAX_MESSAGE_LENGTH}
-            disabled={disabled}
-            className="chat-input-scrollbar placeholder:text-foreground-tertiary text-foreground box-border max-h-70 min-h-0 w-full min-w-0 flex-1 resize-none self-center bg-transparent py-0.5 text-[15px] leading-relaxed focus:outline-none disabled:opacity-50"
+            className="chat-input-scrollbar placeholder:text-foreground-tertiary text-foreground box-border max-h-70 min-h-0 w-full min-w-0 flex-1 resize-none self-center bg-transparent py-0.5 text-[15px] leading-relaxed focus:outline-none"
           />
           <button
             type="submit"

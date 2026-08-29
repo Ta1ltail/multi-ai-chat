@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { MessageList } from "@/components/message-list";
 import { ChatInput } from "@/components/chat-input";
@@ -12,17 +12,6 @@ import { useChat } from "@/lib/use-chat";
 import type { ToastState } from "@/types";
 
 const MODEL_STORAGE_KEY = "selectedModel";
-
-function getStoredModel(): string {
-  if (typeof window === "undefined") return AUTO_MODEL_ID;
-  try {
-    const stored = localStorage.getItem(MODEL_STORAGE_KEY);
-    if (stored) return stored;
-  } catch {
-    // ignore
-  }
-  return AUTO_MODEL_ID;
-}
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -39,7 +28,17 @@ export default function Home() {
   } = useChat();
 
   const [toasts, setToasts] = useState<ToastState[]>([]);
-  const [selectedModel, setSelectedModel] = useState(getStoredModel);
+  const [selectedModel, setSelectedModel] = useState(AUTO_MODEL_ID);
+
+  // Hydrate model from localStorage after mount (avoids hydration mismatch)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(MODEL_STORAGE_KEY);
+      if (stored) setSelectedModel(stored);
+    } catch {
+      // ignore
+    }
+  }, []);
   const toastCounterRef = useRef(0);
 
   const addToast = useCallback((message: string, type: ToastState["type"] = "error") => {
@@ -129,15 +128,19 @@ export default function Home() {
         </>
       )}
 
-      {/* Toast notifications */}
-      {toasts.map((toast) => (
-        <Toast
-          key={toast.id}
-          message={toast.message}
-          type={toast.type}
-          onClose={() => removeToast(toast.id)}
-        />
-      ))}
+      {/* Toast notifications — stacked in a fixed container */}
+      {toasts.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+          {toasts.map((toast) => (
+            <Toast
+              key={toast.id}
+              message={toast.message}
+              type={toast.type}
+              onClose={() => removeToast(toast.id)}
+            />
+          ))}
+        </div>
+      )}
     </AppShell>
   );
 }

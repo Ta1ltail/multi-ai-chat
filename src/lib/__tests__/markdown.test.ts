@@ -132,4 +132,52 @@ describe("renderMarkdown", () => {
     expect(result).not.toContain("<script>");
     expect(result).toContain("&lt;script&gt;");
   });
+
+  // --- Code block sentinel tests (H-2 + M-7) ---
+
+  it("does not bold asterisks inside code blocks", () => {
+    const input = "```\n**not bold**\n```";
+    const result = renderMarkdown(input);
+    expect(result).not.toContain("<strong>");
+    expect(result).toContain("**not bold**");
+  });
+
+  it("does not italicize single asterisks inside code blocks", () => {
+    const input = "```\n*not italic*\n```";
+    const result = renderMarkdown(input);
+    expect(result).not.toContain("<em>");
+    expect(result).toContain("*not italic*");
+  });
+
+  it("does not create links inside code blocks", () => {
+    const input = "```\n[text](https://example.com)\n```";
+    const result = renderMarkdown(input);
+    expect(result).not.toContain("<a href");
+    expect(result).toContain("[text](https://example.com)");
+  });
+
+  it("does not convert backticks inside code blocks to inline code", () => {
+    const input = "```\n`not inline`\n```";
+    const result = renderMarkdown(input);
+    // Should have the code-block-wrapper code tag, not inline code styling
+    expect(result).toContain("`not inline`");
+  });
+
+  it("still applies inline passes outside code blocks", () => {
+    const input = "**bold**\n```\n*not bold*\n```\n**also bold**";
+    const result = renderMarkdown(input);
+    expect(result).toContain("<strong>bold</strong>");
+    expect(result).toContain("<strong>also bold</strong>");
+    expect(result).not.toContain("<strong>not bold</strong>");
+  });
+
+  it("handles multiple code blocks with different languages", () => {
+    const input = "```javascript\n// **bold**\n```\n\nSome text\n\n```python\n# **bold**\n```";
+    const result = renderMarkdown(input);
+    // No bold inside code blocks — asterisks preserved as text (not wrapped in <strong>)
+    expect(result).not.toContain("<strong>");
+    expect(result).toContain("**bold**");
+    // Text outside code blocks is untouched
+    expect(result).toContain("Some text");
+  });
 });
