@@ -1,55 +1,25 @@
-/**
- * Lightweight markdown renderer for chat messages.
- * Handles: code blocks, inline code, bold, italic, links, lists, line breaks.
- * No external dependencies.
- *
- * Uses a sentinel-based approach: code blocks are extracted to unique
- * placeholders before inline passes, then restored afterward. This
- * prevents bold/italic/link regexes from mutating code content.
- */
-
 import { getHighlightedCode } from "./highlight";
 
-/**
- * Escape characters that are special inside HTML attribute values.
- * Prevents attribute breakout (e.g. injecting `"` to escape href).
- */
 function escapeAttr(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-/**
- * Validate URL scheme — only allow safe protocols.
- * Blocks javascript:, data:, vbscript:, etc.
- */
 function safeUrl(raw: string): string {
   const trimmed = raw.trim();
-  // Allow fragment-only links
   if (trimmed.startsWith("#")) return escapeAttr(trimmed);
-  // Allow safe schemes
   if (/^(https?|mailto):/i.test(trimmed)) return escapeAttr(trimmed);
-  // Block everything else — fall back to #
   return "#";
 }
 
-/** Sentinel prefix used to mark extracted code block placeholders. */
 const SENTINEL_PREFIX = "\u0000CODEBLOCK_";
 
 export function renderMarkdown(text: string): string {
   let html = text;
-
-  // ── Step 1: Extract code blocks to sentinels ──
-  // This prevents inline passes from mutating code content.
   const sentinels: string[] = [];
 
+  // Extract code blocks to sentinels (prevents inline passes from mutating code)
   html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    const language = lang || "text";
-    const highlighted = getHighlightedCode(code.trim(), language);
-
+    const highlighted = getHighlightedCode(code.trim(), lang || "text");
     const block = `<div class="code-block-wrapper my-3">
       <div class="code-block overflow-hidden rounded-lg border border-border-separator bg-surface-elevated">
         <pre class="overflow-x-auto p-4 text-[13px] leading-relaxed"><code class="font-mono text-foreground">${highlighted}</code></pre>
@@ -61,48 +31,27 @@ export function renderMarkdown(text: string): string {
         </button>
       </div>
     </div>`;
-
     const sentinel = `${SENTINEL_PREFIX}${sentinels.length}\u0000`;
     sentinels.push(block);
     return sentinel;
   });
 
-  // ── Step 2: Inline passes (safe — code blocks are extracted) ──
-
-  // Inline code (` ... `)
-  html = html.replace(
-    /`([^`]+)`/g,
-    '<code class="bg-surface-elevated rounded px-1.5 py-0.5 text-[13px] font-mono text-accent">$1</code>',
-  );
-
-  // Bold (** ... **)
+  // Inline passes
+  html = html.replace(/`([^`]+)`/g, '<code class="bg-surface-elevated rounded px-1.5 py-0.5 text-[13px] font-mono text-accent">$1</code>');
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-
-  // Italic (* ... *)
   html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, "<em>$1</em>");
-
-  // Links [text](url) — with URL scheme validation and attribute escaping
   html = html.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
     (_, text: string, url: string) =>
       `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer" class="text-accent underline decoration-accent/30 underline-offset-2 transition-colors hover:text-accent-hover hover:decoration-accent-hover">${text}</a>`,
   );
-
-  // Unordered lists (- item)
   html = html.replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
   html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, (match) => `<ul class="my-2 space-y-1">${match}</ul>`);
-
-  // Ordered lists (1. item)
   html = html.replace(/^\d+\.\s+(.+)$/gm, '<li class="ml-4 list-decimal">$1</li>');
-  html = html.replace(
-    /(<li class="ml-4 list-decimal">[^<]*<\/li>\n?)+/g,
-    (match) => `<ol class="my-2 space-y-1">${match}</ol>`,
-  );
-
-  // Line breaks (but not inside sentinels or pre tags)
+  html = html.replace(/(<li class="ml-4 list-decimal">[^<]*<\/li>\n?)+/g, (match) => `<ol class="my-2 space-y-1">${match}</ol>`);
   html = html.replace(/(?<!<\/pre>)\n(?!<)/g, "<br>");
 
-  // ── Step 3: Restore code block sentinels ──
+  // Restore sentinels
   for (let i = 0; i < sentinels.length; i++) {
     html = html.replace(`${SENTINEL_PREFIX}${i}\u0000`, sentinels[i]);
   }

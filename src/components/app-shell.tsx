@@ -14,26 +14,17 @@ interface AppShellProps {
 }
 
 export function AppShell({
-  children,
-  conversations,
-  onNewChat,
-  onSelectConversation,
-  onDeleteConversation,
-  theme,
-  onToggleTheme,
+  children, conversations, onNewChat, onSelectConversation,
+  onDeleteConversation, theme, onToggleTheme,
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // On mobile, start sidebar closed to avoid overlay-on-load issue
   useEffect(() => {
-    if (window.innerWidth < 768) {
-      setSidebarOpen(false);
-    }
+    if (window.innerWidth < 768) setSidebarOpen(false);
   }, []);
 
   return (
     <div className="flex h-dvh overflow-hidden bg-background">
-      {/* Sidebar */}
       <div
         className={`relative z-30 bg-surface flex shrink-0 flex-col overflow-hidden transition-[width] duration-200 ease-in-out ${
           sidebarOpen ? "w-64" : "w-0"
@@ -45,9 +36,7 @@ export function AppShell({
             onNewChat={onNewChat}
             onSelectConversation={(id) => {
               onSelectConversation(id);
-              if (window.innerWidth < 768) {
-                setSidebarOpen(false);
-              }
+              if (window.innerWidth < 768) setSidebarOpen(false);
             }}
             onDeleteConversation={onDeleteConversation}
             onToggle={() => setSidebarOpen(false)}
@@ -57,24 +46,9 @@ export function AppShell({
         </div>
       </div>
 
-      {/* Sidebar separator */}
       {sidebarOpen && <div className="hidden w-px shrink-0 bg-border-separator md:block" />}
+      {sidebarOpen && <Overlay onClose={() => setSidebarOpen(false)} />}
 
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/20 backdrop-blur-[1px] md:hidden"
-          onClick={() => setSidebarOpen(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setSidebarOpen(false);
-          }}
-          role="button"
-          tabIndex={0}
-          aria-label="Close sidebar"
-        />
-      )}
-
-      {/* Reopen button — visible when sidebar is closed */}
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
@@ -89,10 +63,22 @@ export function AppShell({
         </button>
       )}
 
-      {/* Main area */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
       </div>
     </div>
+  );
+}
+
+function Overlay({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <button type="button" onClick={onClose} aria-label="Close sidebar"
+      className="fixed inset-0 z-20 bg-black/20 backdrop-blur-[1px] md:hidden" />
   );
 }

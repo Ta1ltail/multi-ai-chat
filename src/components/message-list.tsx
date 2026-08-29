@@ -9,7 +9,6 @@ interface MessageListProps {
   isLoading?: boolean;
 }
 
-/** How close to the bottom (in px) before we consider the user "at the bottom" */
 const SCROLL_THRESHOLD = 150;
 
 export function MessageList({ messages, isLoading }: MessageListProps) {
@@ -17,49 +16,37 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const shouldAutoScroll = useRef(true);
 
-  /** Check whether the container is scrolled near the bottom */
   const isNearBottom = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return true;
     return el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD;
   }, []);
 
-  // Track whether the user has scrolled up manually
-  const handleScroll = useCallback(() => {
-    shouldAutoScroll.current = isNearBottom();
-  }, [isNearBottom]);
+  const handleScroll = useCallback(() => { shouldAutoScroll.current = isNearBottom(); }, [isNearBottom]);
 
-  // Auto-scroll to bottom when new messages arrive, but only if user is near bottom
   useEffect(() => {
-    if (shouldAutoScroll.current) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    if (shouldAutoScroll.current) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Scroll to bottom on initial load (only once)
   const hasScrolledInitial = useRef(false);
   useEffect(() => {
-    if (!hasScrolledInitial.current && messages.length > 0 && messages[0].content) {
+    if (!hasScrolledInitial.current && messages.length > 0) {
       bottomRef.current?.scrollIntoView({ behavior: "instant" });
       hasScrolledInitial.current = true;
     }
   }, [messages]);
 
   return (
-    <div
-      ref={scrollRef}
-      onScroll={handleScroll}
-      className="custom-scrollbar flex-1 overflow-y-auto px-4 py-6"
-    >
-      <div
-        aria-live="polite"
-        aria-label="Chat messages"
-        className="mx-auto flex max-w-3xl flex-col gap-5"
-      >
+    <div ref={scrollRef} onScroll={handleScroll} className="custom-scrollbar flex-1 overflow-y-auto px-4 py-6">
+      <div role="log" aria-label="Chat messages" aria-live="polite" className="mx-auto flex max-w-3xl flex-col gap-5">
         {messages.map((msg) => (
           <Message key={msg.id} role={msg.role} content={msg.content} />
         ))}
-        {isLoading && <Message role="assistant" content="" loading />}
+        {isLoading && (
+          <div role="status" aria-label="Assistant is responding">
+            <Message role="assistant" content="" loading />
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
     </div>

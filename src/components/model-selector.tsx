@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { providerConfigs, AUTO_MODEL_ID, type ModelConfig } from "@/lib/ai";
+import { providerConfigs, AUTO_MODEL_ID, type ModelConfig } from "@/lib/ai/models";
 
 const allModels = providerConfigs.flatMap((p) => p.models);
 
@@ -80,7 +80,7 @@ export function ModelSelector({ selectedModel, onSelectModel, disabled }: ModelS
                   : "text-foreground-secondary hover:bg-hover hover:text-foreground"
               }`}
             >
-              <span className="flex-1 truncate">✨ {AUTO_LABEL}</span>
+              <span className="flex-1 truncate"><span aria-hidden="true">✨</span> {AUTO_LABEL}</span>
               <span className="shrink-0 text-[11px] text-foreground-tertiary">best available</span>
               {isAuto && (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-accent">

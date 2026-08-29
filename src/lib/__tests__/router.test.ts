@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
-// Mock process.env for provider availability checks
 const originalEnv = process.env;
 
 beforeEach(() => {
@@ -9,8 +8,8 @@ beforeEach(() => {
   delete process.env.OPENROUTER_API_KEY;
 });
 
-// Import after env setup — the module reads process.env at call time, not import time
-import { getAvailableProviders, selectBestModel, AUTO_MODEL_ID } from "../ai/router";
+import { getAvailableProviders, selectBestModel } from "../ai/router";
+import { AUTO_MODEL_ID } from "../ai/models";
 
 describe("AUTO_MODEL_ID", () => {
   it("equals \"auto\"", () => {
@@ -55,13 +54,13 @@ describe("selectBestModel", () => {
   it("selects the highest priority Groq model", () => {
     const best = selectBestModel(["groq"]);
     expect(best.provider).toBe("groq");
-    expect(best.id).toBe("openai/gpt-oss-120b"); // priority 90
+    expect(best.id).toBe("openai/gpt-oss-120b");
   });
 
   it("selects the highest priority OpenRouter model", () => {
     const best = selectBestModel(["openrouter"]);
     expect(best.provider).toBe("openrouter");
-    expect(best.id).toBe("nvidia/nemotron-3-ultra-550b-a55b:free"); // priority 80
+    expect(best.id).toBe("nvidia/nemotron-3-ultra-550b-a55b:free");
   });
 
   it("prefers Groq over OpenRouter when both available (higher priority)", () => {

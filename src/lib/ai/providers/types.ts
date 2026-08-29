@@ -10,7 +10,6 @@ export interface ModelConfig {
   provider: string;
   maxTokens: number;
   contextLength: number;
-  /** Higher = preferred by auto-router (0-100). */
   priority: number;
 }
 
@@ -26,12 +25,9 @@ export interface StreamOptions {
   maxTokens?: number;
   temperature?: number;
   topP?: number;
+  signal?: AbortSignal;
 }
 
-/**
- * Every provider must implement this interface.
- * The API route calls `createStream` and returns the ReadableStream to the client.
- */
 export interface AIProvider {
   readonly id: string;
   readonly name: string;

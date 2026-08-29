@@ -2,13 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Conversation, MessageData } from "@/types";
-import { getModelById } from "@/lib/ai";
+import { getModelById } from "@/lib/ai/models";
 import { readSSEStream } from "@/lib/sse";
 import { loadConversations, saveConversations } from "@/lib/conversations";
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
 
 function generateTitle(firstMessage: string): string {
   const trimmed = firstMessage.trim();
@@ -26,6 +22,7 @@ export interface UseChatReturn {
   handleSelectConversation: (id: string) => void;
   handleDeleteConversation: (id: string) => void;
   handleSend: (content: string, modelId: string) => Promise<void>;
+  handleStop: () => void;
 }
 
 export function useChat(): UseChatReturn {
@@ -42,19 +39,13 @@ export function useChat(): UseChatReturn {
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // Load from localStorage on mount
   useEffect(() => {
     const persisted = loadConversations();
-    if (persisted.length > 0) {
-      setConversations(persisted);
-    }
+    if (persisted.length > 0) setConversations(persisted);
     setLoaded(true);
   }, []);
 
-  // Debounced save to localStorage with max-wait (throttle)
-  // Tokens arrive faster than 500ms apart during streaming, so a pure
-  // trailing debounce would never fire mid-stream. We force a save after
-  // 3 seconds regardless, and flush immediately on pagehide/visibilitychange.
+  // Throttled save: flush on pagehide/visibilitychange, max 3s deferred
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const lastSavedAtRef = useRef(0);
   const conversationsRefForSave = useRef(conversations);
@@ -63,217 +54,176 @@ export function useChat(): UseChatReturn {
   const flushSave = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = null;
-    saveConversations(conversationsRefForSave.current);
+    const result = saveConversations(conversationsRefForSave.current);
     lastSavedAtRef.current = Date.now();
+    if (!result.ok && result.saved) setConversations(result.saved);
   }, []);
 
   useEffect(() => {
     if (!loaded) return;
-
-    const now = Date.now();
-    const elapsed = now - lastSavedAtRef.current;
+    const elapsed = Date.now() - lastSavedAtRef.current;
     const MAX_WAIT_MS = 3000;
     const DEBOUNCE_MS = 500;
 
     if (elapsed >= MAX_WAIT_MS) {
-      // Max-wait exceeded: save immediately (throttle behavior)
       flushSave();
     } else {
-      // Still within debounce window: schedule, but cap at max-wait boundary
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       const remaining = MAX_WAIT_MS - elapsed;
       saveTimerRef.current = setTimeout(flushSave, Math.min(DEBOUNCE_MS, remaining));
     }
-
-    return () => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    };
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [conversations, loaded, flushSave]);
 
-  // Flush pending save on page hide / tab close / navigation
   useEffect(() => {
-    function handleVisibilityChange() {
-      if (document.visibilityState === "hidden") flushSave();
-    }
-    function handlePageHide() {
-      flushSave();
-    }
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("pagehide", handlePageHide);
+    const onHidden = () => { if (document.visibilityState === "hidden") flushSave(); };
+    const onPageHide = () => flushSave();
+    document.addEventListener("visibilitychange", onHidden);
+    window.addEventListener("pagehide", onPageHide);
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("pagehide", handlePageHide);
+      document.removeEventListener("visibilitychange", onHidden);
+      window.removeEventListener("pagehide", onPageHide);
     };
   }, [flushSave]);
 
   const activeConversation = conversations.find((c) => c.id === activeId);
   const messages = activeConversation?.messages ?? [];
 
+  useEffect(() => () => { abortRef.current?.abort(); }, []);
+
   const handleNewChat = useCallback(() => {
+    abortRef.current?.abort();
     setActiveId(null);
   }, []);
 
-  const handleSelectConversation = useCallback((id: string) => {
-    setActiveId(id);
+  const handleSelectConversation = useCallback((id: string) => { setActiveId(id); }, []);
+
+  const handleDeleteConversation = useCallback((id: string) => {
+    if (activeIdRef.current === id) {
+      abortRef.current?.abort();
+      setActiveId(null);
+    }
+    setConversations((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
-  const handleDeleteConversation = useCallback(
-    (id: string) => {
-      setConversations((prev) => prev.filter((c) => c.id !== id));
-      if (activeIdRef.current === id) {
-        setActiveId(null);
+  const handleSend = useCallback(async (content: string, modelId: string) => {
+    abortRef.current?.abort();
+
+    const convId = activeIdRef.current ?? crypto.randomUUID();
+    if (!activeIdRef.current) {
+      setConversations((prev) => [
+        { id: convId, title: generateTitle(content), messages: [], createdAt: Date.now() },
+        ...prev,
+      ]);
+      setActiveId(convId);
+    }
+
+    const currentConv = conversationsRef.current.find((c) => c.id === convId);
+    const historyMessages = currentConv?.messages ?? [];
+
+    const userMsg: MessageData = { id: crypto.randomUUID(), role: "user", content };
+    const assistantId = crypto.randomUUID();
+    const assistantMsg: MessageData = { id: assistantId, role: "assistant", content: "" };
+
+    setConversations((prev) => {
+      const conv = prev.find((c) => c.id === convId);
+      const title = conv && conv.messages.length === 0 ? generateTitle(content) : conv?.title ?? "";
+      return prev.map((c) =>
+        c.id === convId ? { ...c, title, messages: [...c.messages, userMsg, assistantMsg] } : c,
+      );
+    });
+
+    setIsLoading(true);
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    try {
+      const filteredHistory = [...historyMessages, userMsg].filter((m) =>
+        !(m.role === "assistant" && (m.content === "" || m.content.startsWith("Error: "))),
+      );
+
+      const modelConfig = getModelById(modelId);
+      const contextLength = modelConfig?.contextLength ?? 131072;
+      const maxChars = Math.floor(contextLength * 0.8 * 4);
+      let totalChars = 0;
+      const windowedMessages: typeof filteredHistory = [];
+      for (let i = filteredHistory.length - 1; i >= 0; i--) {
+        totalChars += filteredHistory[i].content.length;
+        if (totalChars > maxChars) break;
+        windowedMessages.unshift(filteredHistory[i]);
       }
-    },
-    [],
-  );
 
-  const handleSend = useCallback(
-    async (content: string, modelId: string) => {
-      // Abort any in-flight request
-      abortRef.current?.abort();
+      const apiMessages = windowedMessages.map((m) => ({ role: m.role, content: m.content }));
+      const providerId = modelConfig?.provider ?? "groq";
 
-      // Determine conversation ID — create new if needed
-      let convId = activeIdRef.current;
-      if (!convId) {
-        convId = generateId();
-        const newConv: Conversation = {
-          id: convId,
-          title: generateTitle(content),
-          messages: [],
-          createdAt: Date.now(),
-        };
-        setConversations((prev) => [newConv, ...prev]);
-        setActiveId(convId);
-      }
-
-      // Read conversation history from ref — pure read, no side-effect in updater
-      const currentConv = conversationsRef.current.find((c) => c.id === convId);
-      const historyMessages = currentConv?.messages ?? [];
-
-      const userMsg: MessageData = {
-        id: generateId(),
-        role: "user",
-        content,
-      };
-
-      const assistantId = generateId();
-      const assistantMsg: MessageData = {
-        id: assistantId,
-        role: "assistant",
-        content: "",
-      };
-
-      // Append user + empty assistant message
-      setConversations((prev) => {
-        const conv = prev.find((c) => c.id === convId);
-        const title =
-          conv && conv.messages.length === 0 ? generateTitle(content) : conv?.title ?? "";
-        return prev.map((c) =>
-          c.id === convId
-            ? { ...c, title, messages: [...c.messages, userMsg, assistantMsg] }
-            : c,
-        );
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: apiMessages, provider: providerId, model: modelId }),
+        signal: controller.signal,
       });
 
-      setIsLoading(true);
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
 
-      const controller = new AbortController();
-      abortRef.current = controller;
+      let fullText = "";
+      let pendingText = "";
+      let rafId = 0;
 
-      try {
-        const apiMessages = [...historyMessages, userMsg].map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
-
-        const modelConfig = getModelById(modelId);
-        const providerId = modelConfig?.provider ?? "groq";
-
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: apiMessages, provider: providerId, model: modelId }),
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          throw new Error(`API error: ${res.status}`);
-        }
-
-        let fullText = "";
-        await readSSEStream(
-          res,
-          (event) => {
-            if (event.text) {
-              fullText += event.text;
-              const currentFullText = fullText;
-              setConversations((prev) =>
-                prev.map((c) =>
-                  c.id === convId
-                    ? {
-                        ...c,
-                        messages: c.messages.map((m) =>
-                          m.id === assistantId ? { ...m, content: currentFullText } : m,
-                        ),
-                      }
-                    : c,
-                ),
-              );
-            }
-          },
-          () => {},
-        );
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        const errorMsg = error instanceof Error ? error.message : "Failed to get response";
+      const flushPending = () => {
+        rafId = 0;
+        if (!pendingText) return;
+        fullText += pendingText;
+        pendingText = "";
+        const snapshot = fullText;
         setConversations((prev) =>
           prev.map((c) =>
             c.id === convId
-              ? {
-                  ...c,
-                  messages: c.messages.map((m) =>
-                    m.id === assistantId ? { ...m, content: `Error: ${errorMsg}` } : m,
-                  ),
-                }
+              ? { ...c, messages: c.messages.map((m) => m.id === assistantId ? { ...m, content: snapshot } : m) }
               : c,
           ),
         );
-        throw error; // Re-throw so caller can show toast
-      } finally {
-        // Only reset loading if this request is still the active one.
-        // If send #2 aborted send #1, send #1's finally must not clobber
-        // send #2's isLoading(true).
-        if (abortRef.current === controller) {
-          abortRef.current = null;
-          setIsLoading(false);
-        }
-        // Clean up empty assistant message if stream returned no content
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === convId
-              ? {
-                  ...c,
-                  messages: c.messages.filter(
-                    (m) => !(m.id === assistantId && m.content === ""),
-                  ),
-                }
-              : c,
-          ),
-        );
+      };
+
+      await readSSEStream(
+        res,
+        (event) => {
+          if (event.text) {
+            pendingText += event.text;
+            if (rafId === 0) rafId = requestAnimationFrame(flushPending);
+          }
+        },
+        () => { cancelAnimationFrame(rafId); flushPending(); },
+      );
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      const errorMsg = error instanceof Error ? error.message : "Failed to get response";
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === convId
+            ? { ...c, messages: c.messages.map((m) => m.id === assistantId ? { ...m, content: `Error: ${errorMsg}` } : m) }
+            : c,
+        ),
+      );
+      throw error;
+    } finally {
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+        setIsLoading(false);
       }
-    },
-    [],
-  );
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === convId
+            ? { ...c, messages: c.messages.filter((m) => !(m.id === assistantId && m.content === "")) }
+            : c,
+        ),
+      );
+    }
+  }, []);
+
+  const handleStop = useCallback(() => { abortRef.current?.abort(); }, []);
 
   return {
-    conversations,
-    activeId,
-    messages,
-    isLoading,
-    loaded,
-    handleNewChat,
-    handleSelectConversation,
-    handleDeleteConversation,
-    handleSend,
+    conversations, activeId, messages, isLoading, loaded,
+    handleNewChat, handleSelectConversation, handleDeleteConversation, handleSend, handleStop,
   };
 }

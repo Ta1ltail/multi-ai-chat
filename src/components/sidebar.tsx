@@ -81,7 +81,7 @@ export function Sidebar({
 
       {/* New chat button */}
       <div className="px-3 pb-3">
-        <Button variant="secondary" size="md" className="w-full justify-start" onClick={onNewChat}>
+        <Button variant="secondary" className="w-full justify-start" onClick={onNewChat}>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <path d="M8 3v10M3 8h10" />
           </svg>
@@ -90,11 +90,11 @@ export function Sidebar({
       </div>
 
       {/* Conversation list */}
-      <div className="custom-scrollbar flex-1 overflow-y-auto px-2 py-1">
+      <nav className="custom-scrollbar flex-1 overflow-y-auto px-2 py-1" aria-label="Conversations">
         {conversations.length === 0 ? (
           <p className="px-2 py-6 text-center text-xs text-foreground-tertiary">No conversations yet</p>
         ) : (
-          <ul className="space-y-0.5">
+          <ul className="space-y-0.5" role="list">
             {conversations.map((conv) => (
               <li key={conv.id} className="group relative">
                 <button
@@ -102,6 +102,7 @@ export function Sidebar({
                     setConfirmDeleteId(null);
                     onSelectConversation(conv.id);
                   }}
+                  aria-current={conv.active ? "page" : undefined}
                   className={`focus-ring flex w-full items-center gap-2.5 truncate rounded-lg px-3 py-2 pr-8 text-left text-[13px] transition-colors duration-100 ${
                     conv.active
                       ? "bg-accent-light font-medium text-foreground"
@@ -171,11 +172,11 @@ export function Sidebar({
             ))}
           </ul>
         )}
-      </div>
+      </nav>
 
       {/* Footer */}
       <div className="flex items-center justify-between px-4 py-3">
-        <p className="text-[11px] text-foreground-tertiary/60">v0.3.0</p>
+        <p className="text-[11px] text-foreground-tertiary">v0.3.0</p>
         <button
           onClick={onToggleTheme}
           aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}

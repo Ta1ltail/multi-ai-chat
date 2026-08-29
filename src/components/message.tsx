@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { renderMarkdown } from "@/lib/markdown";
 import { sanitizeHTML } from "@/lib/sanitize";
 
@@ -12,7 +12,7 @@ interface MessageProps {
 
 const COPY_RESET_MS = 2000;
 
-export function Message({ role, content, loading }: MessageProps) {
+export const Message = memo(function Message({ role, content, loading }: MessageProps) {
   const isUser = role === "user";
   const [copied, setCopied] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -82,12 +82,12 @@ export function Message({ role, content, loading }: MessageProps) {
     );
   }
 
-  const hasCodeBlock = !isUser && /```[\s\S]*?```/.test(content);
-  const showMessageCopy = Boolean(content) && !hasCodeBlock;
+  const showMessageCopy = Boolean(content);
 
   const copyButton = showMessageCopy ? (
     <button
       onClick={handleCopyMessage}
+      aria-label={copied ? "Copied!" : "Copy message"}
       className="focus-ring text-foreground-tertiary hover:text-foreground inline-flex h-6 w-6 items-center justify-center rounded-md transition-colors duration-100 hover:bg-hover"
       title={copied ? "Copied!" : "Copy message"}
     >
@@ -125,4 +125,4 @@ export function Message({ role, content, loading }: MessageProps) {
       {copyButton && <div className="mt-1">{copyButton}</div>}
     </div>
   );
-}
+});

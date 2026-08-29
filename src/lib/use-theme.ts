@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
-
 const STORAGE_KEY = "theme";
 
 function getSystemTheme(): Theme {
@@ -20,58 +19,41 @@ function getStoredTheme(): Theme | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === "light" || stored === "dark") return stored;
-  } catch {
-    // Safari private mode or storage quota — ignore
-  }
+  } catch { /* Safari private mode */ }
   return null;
 }
 
 function storeTheme(theme: Theme): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, theme);
-  } catch {
-    // Safari private mode or storage quota — ignore
-  }
+  try { localStorage.setItem(STORAGE_KEY, theme); } catch { /* Safari private mode */ }
 }
 
 function applyTheme(theme: Theme) {
-  const root = document.documentElement;
-  if (theme === "dark") {
-    root.classList.add("dark");
-  } else {
-    root.classList.remove("dark");
-  }
+  document.documentElement.classList.toggle("dark", theme === "dark");
 }
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>("light");
 
-  // Initialize on mount
   useEffect(() => {
-    const stored = getStoredTheme();
-    const initial = stored ?? getSystemTheme();
+    const initial = getStoredTheme() ?? getSystemTheme();
     setTheme(initial);
     applyTheme(initial);
   }, []);
 
-  // Listen for system theme changes (only if user hasn't set a preference)
   useEffect(() => {
-    const stored = getStoredTheme();
-    if (stored) return; // User has a manual preference, ignore system
-
+    if (getStoredTheme()) return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    function handleChange(e: MediaQueryListEvent) {
-      const newTheme = e.matches ? "dark" : "light";
-      setTheme(newTheme);
-      applyTheme(newTheme);
-    }
-    mq.addEventListener("change", handleChange);
-    return () => mq.removeEventListener("change", handleChange);
+    const handler = (e: MediaQueryListEvent) => {
+      const t: Theme = e.matches ? "dark" : "light";
+      setTheme(t);
+      applyTheme(t);
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
   const toggleTheme = useCallback(() => {
-    // Compute next theme outside state updater to avoid side effects in updater
-    const next = theme === "light" ? "dark" : "light";
+    const next: Theme = theme === "light" ? "dark" : "light";
     setTheme(next);
     applyTheme(next);
     storeTheme(next);

@@ -1,13 +1,9 @@
-/**
- * localStorage persistence for conversations.
- * Handles read/write errors gracefully and enforces a storage limit.
- */
-
 import type { Conversation, MessageData } from "@/types";
 
 const STORAGE_KEY = "conversations";
 const STORAGE_VERSION = 1;
 const MAX_CONVERSATIONS = 100;
+const MAX_MESSAGES_PER_CONVERSATION = 500;
 
 interface StoredData {
   version?: number;
@@ -41,10 +37,7 @@ export function loadConversations(): Conversation[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-
     const parsed: StoredData | Conversation[] = JSON.parse(raw);
-
-    // Handle legacy format (plain array, no version)
     let items: unknown[];
     if (Array.isArray(parsed)) {
       items = parsed;
@@ -53,31 +46,35 @@ export function loadConversations(): Conversation[] {
     } else {
       return [];
     }
-
-    // Validate each item, filter out corrupt ones
-    const valid = items.filter(isValidConversation) as Conversation[];
-    return valid;
+    return items.filter(isValidConversation) as Conversation[];
   } catch {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
-    }
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
     return [];
   }
 }
 
-export function saveConversations(conversations: Conversation[]): void {
-  if (typeof window === "undefined") return;
-  const data = { version: STORAGE_VERSION, conversations: conversations.slice(0, MAX_CONVERSATIONS) };
+export interface SaveResult {
+  ok: boolean;
+  saved?: Conversation[];
+}
+
+export function saveConversations(conversations: Conversation[]): SaveResult {
+  if (typeof window === "undefined") return { ok: true };
+  const trimmed = conversations.slice(0, MAX_CONVERSATIONS).map((c) => ({
+    ...c,
+    messages: c.messages.slice(-MAX_MESSAGES_PER_CONVERSATION),
+  }));
+  const data = { version: STORAGE_VERSION, conversations: trimmed };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    return { ok: true };
   } catch {
     try {
-      const trimmed = data.conversations.slice(0, Math.floor(data.conversations.length / 2));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: STORAGE_VERSION, conversations: trimmed }));
+      const half = trimmed.slice(0, Math.floor(trimmed.length / 2));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: STORAGE_VERSION, conversations: half }));
+      return { ok: false, saved: half };
     } catch {
-      console.warn("Could not save conversations: storage full");
+      return { ok: false };
     }
   }
 }

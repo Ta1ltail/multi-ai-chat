@@ -1,8 +1,3 @@
-/**
- * Lightweight regex-based syntax highlighter.
- * No external dependencies. Handles JS/TS, Python, HTML, CSS, JSON, and more.
- */
-
 interface LanguageDef {
   name: string;
   patterns: Array<{ regex: RegExp; className: string }>;
@@ -87,77 +82,37 @@ const languages: Record<string, LanguageDef> = {
       { regex: /\b(\d+)\b/g, className: "hljs-number" },
     ],
   },
-  // Auto-detect fallback
-  plaintext: {
-    name: "Plain Text",
-    patterns: [],
-  },
+  plaintext: { name: "Plain Text", patterns: [] },
 };
 
-// Map common aliases to language keys
 const aliases: Record<string, string> = {
-  js: "javascript",
-  jsx: "javascript",
-  ts: "typescript",
-  tsx: "typescript",
-  py: "python",
-  sh: "bash",
-  shell: "bash",
-  zsh: "bash",
-  dockerfile: "bash",
+  js: "javascript", jsx: "javascript", ts: "typescript", tsx: "typescript",
+  py: "python", sh: "bash", shell: "bash", zsh: "bash", dockerfile: "bash",
 };
 
 function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-interface HighlightMatch {
-  start: number;
-  end: number;
-  className: string;
-  priority: number;
-}
+interface HighlightMatch { start: number; end: number; className: string; priority: number; }
 
 function highlightCode(code: string, lang: string): string {
-  const normalizedLang = lang.toLowerCase().trim();
-  const langKey = aliases[normalizedLang] ?? normalizedLang;
+  const langKey = aliases[lang.toLowerCase().trim()] ?? lang.toLowerCase().trim();
   const language = languages[langKey] ?? languages.plaintext;
+  if (language.patterns.length === 0) return escapeHtml(code);
 
-  if (language.patterns.length === 0) {
-    return escapeHtml(code);
-  }
-
-  // Run regex patterns against the ORIGINAL (unescaped) code so that
-  // patterns like string delimiters (" ' `) match correctly.
-  // We then map positions to the escaped text when building output.
   const matches: HighlightMatch[] = [];
-
   language.patterns.forEach((pattern, priority) => {
     const flags = pattern.regex.flags.includes("g") ? pattern.regex.flags : `${pattern.regex.flags}g`;
     const regex = new RegExp(pattern.regex.source, flags);
     let match: RegExpExecArray | null;
     while ((match = regex.exec(code)) !== null) {
-      if (match[0].length === 0) {
-        regex.lastIndex += 1;
-        continue;
-      }
-      matches.push({
-        start: match.index,
-        end: match.index + match[0].length,
-        className: pattern.className,
-        priority,
-      });
+      if (match[0].length === 0) { regex.lastIndex += 1; continue; }
+      matches.push({ start: match.index, end: match.index + match[0].length, className: pattern.className, priority });
     }
   });
 
-  // Earliest match wins; ties go to whichever pattern appears first.
   matches.sort((a, b) => a.start - b.start || a.priority - b.priority);
-
-  // Resolve overlapping matches — keep the first/highest-priority one.
   const resolved: HighlightMatch[] = [];
   let lastEnd = 0;
   for (const match of matches) {
@@ -166,9 +121,6 @@ function highlightCode(code: string, lang: string): string {
     lastEnd = match.end;
   }
 
-  // Build the final string: escape non-matched segments, escape matched
-  // segments too, and wrap matched segments in <span> tags. This avoids
-  // the old bug of re-scanning text that already contains span attributes.
   let result = "";
   let cursor = 0;
   for (const match of resolved) {
@@ -177,11 +129,9 @@ function highlightCode(code: string, lang: string): string {
     cursor = match.end;
   }
   result += escapeHtml(code.slice(cursor));
-
   return result;
 }
 
 export function getHighlightedCode(code: string, lang: string): string {
   return highlightCode(code, lang);
 }
-

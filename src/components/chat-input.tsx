@@ -1,23 +1,17 @@
 "use client";
 
-import {
-  type FormEvent,
-  type KeyboardEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 
 const MAX_HEIGHT = 280;
 const MAX_MESSAGE_LENGTH = 16_000;
 
 interface ChatInputProps {
   onSend: (message: string) => void;
+  onStop?: () => void;
   disabled?: boolean;
 }
 
-export function ChatInput({ onSend, disabled }: ChatInputProps) {
+export function ChatInput({ onSend, onStop, disabled }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const rafRef = useRef<number>(0);
@@ -29,9 +23,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
     textarea.style.height = `${Math.min(textarea.scrollHeight, MAX_HEIGHT)}px`;
   }, []);
 
-  useEffect(() => {
-    resizeTextarea();
-  }, [value, resizeTextarea]);
+  useEffect(() => { resizeTextarea(); }, [value, resizeTextarea]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -42,12 +34,8 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    // Skip during IME composition (CJK input methods)
     if (e.nativeEvent.isComposing || e.keyCode === 229) return;
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); }
   }
 
   function handleInput() {
@@ -62,59 +50,26 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
       <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
         <div className="bg-surface border-border-input focus-within:border-foreground-tertiary flex items-end gap-2 rounded-xl border py-2.5 pr-2.5 pl-4 transition-colors">
           <textarea
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onInput={handleInput}
-            placeholder="Message..."
-            rows={1}
-            maxLength={MAX_MESSAGE_LENGTH}
+            ref={textareaRef} value={value} onChange={(e) => setValue(e.target.value)}
+            onKeyDown={handleKeyDown} onInput={handleInput} placeholder="Message..."
+            rows={1} maxLength={MAX_MESSAGE_LENGTH}
             className="chat-input-scrollbar placeholder:text-foreground-tertiary text-foreground box-border max-h-70 min-h-0 w-full min-w-0 flex-1 resize-none self-center bg-transparent py-0.5 text-[15px] leading-relaxed focus:outline-none"
           />
-          <button
-            type="submit"
-            disabled={!canSend}
-            aria-label="Send message"
-            className={`mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center self-end rounded-lg transition-all duration-150 ${
-              canSend
-                ? "bg-foreground text-background hover:opacity-90 active:scale-95"
-                : disabled
-                  ? "bg-surface-elevated text-foreground-tertiary"
-                  : "bg-surface-elevated text-foreground-tertiary"
-            }`}
-          >
-            {disabled ? (
-              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  className="opacity-25"
-                />
-                <path
-                  d="M12 2a10 10 0 0 1 10 10"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  className="opacity-75"
-                />
-              </svg>
-            ) : (
+          {disabled && onStop ? (
+            <button type="button" onClick={onStop} aria-label="Stop generating"
+              className="mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center self-end rounded-lg bg-surface-elevated text-foreground-secondary transition-all duration-150 hover:bg-hover hover:text-foreground active:scale-95">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
+            </button>
+          ) : (
+            <button type="submit" disabled={!canSend} aria-label="Send message"
+              className={`mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center self-end rounded-lg transition-all duration-150 ${
+                canSend ? "bg-foreground text-background hover:opacity-90 active:scale-95" : "bg-surface-elevated text-foreground-tertiary"
+              }`}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M8 13V3M4.5 6.5 8 3l3.5 3.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M8 13V3M4.5 6.5 8 3l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            )}
-          </button>
+            </button>
+          )}
         </div>
       </form>
     </div>

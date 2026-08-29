@@ -9,7 +9,7 @@
   /* Text — strong, readable hierarchy */
   --foreground: #1a1d23;
   --foreground-secondary: #555b66;
-  --foreground-tertiary: #7d8490;
+  --foreground-tertiary: #5a6270;
 
   /* Accent — restrained blue */
   --accent: #2563eb;
@@ -23,7 +23,7 @@
   /* Interactive states */
   --hover: #f0f1f3;
   --active: #e4e6e9;
-  --focus-ring: #93c5fd;
+  --focus-ring: #1d4ed8;
 
   /* Borders — visible but subtle */
   --border-separator: #e2e4e8;
@@ -63,7 +63,7 @@ html.dark {
   /* Interactive states */
   --hover: #252830;
   --active: #2e3139;
-  --focus-ring: #60a5fa;
+  --focus-ring: #60a5fa; /* 5.4:1 on dark bg */
 
   /* Borders — subtle separation */
   --border-separator: #2a2d35;
@@ -115,6 +115,13 @@ html.dark {
 }
 
 /* ─── Base ─────────────────────────────────────────── */
+
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
 
 html,
 body {
