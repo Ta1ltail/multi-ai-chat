@@ -38,13 +38,14 @@ export async function readSSEStream(
         const data = line.slice(6);
         if (data === "[DONE]") continue;
 
+        let parsed: SSEEvent;
         try {
-          const parsed = JSON.parse(data) as SSEEvent;
-          if (parsed.error) throw new Error(parsed.error);
-          if (parsed.text) onEvent(parsed);
+          parsed = JSON.parse(data) as SSEEvent;
         } catch {
-          // Skip malformed JSON lines
+          continue; // Skip malformed JSON lines
         }
+        if (parsed.error) throw new Error(parsed.error);
+        if (parsed.text) onEvent(parsed);
       }
     }
   } finally {

@@ -33,7 +33,7 @@ describe("renderMarkdown", () => {
     const input = "[Google](https://google.com)";
     const result = renderMarkdown(input);
     expect(result).toContain('href="https://google.com"');
-    expect(result).toContain("target=\"_blank\"");
+    expect(result).toContain('target="_blank"');
     expect(result).toContain("Google");
   });
 
@@ -67,5 +67,69 @@ describe("renderMarkdown", () => {
     const input = "Just plain text";
     const result = renderMarkdown(input);
     expect(result).toContain("Just plain text");
+  });
+
+  // --- URL escaping / scheme validation tests (M-1) ---
+
+  it("allows https links", () => {
+    const input = "[link](https://example.com)";
+    const result = renderMarkdown(input);
+    expect(result).toContain('href="https://example.com"');
+  });
+
+  it("allows http links", () => {
+    const input = "[link](http://example.com)";
+    const result = renderMarkdown(input);
+    expect(result).toContain('href="http://example.com"');
+  });
+
+  it("allows mailto links", () => {
+    const input = "[email](mailto:user@example.com)";
+    const result = renderMarkdown(input);
+    expect(result).toContain('href="mailto:user@example.com"');
+  });
+
+  it("allows fragment-only links", () => {
+    const input = "[jump](#section)";
+    const result = renderMarkdown(input);
+    expect(result).toContain('href="#section"');
+  });
+
+  it("blocks javascript: URLs", () => {
+    const input = "[click](javascript:alert(1))";
+    const result = renderMarkdown(input);
+    expect(result).not.toContain("javascript:");
+    expect(result).toContain('href="#"');
+  });
+
+  it("blocks data: URLs", () => {
+    const input = "[click](data:text/html,<script>alert(1)</script>)";
+    const result = renderMarkdown(input);
+    expect(result).not.toContain("data:");
+    expect(result).toContain('href="#"');
+  });
+
+  it("blocks vbscript: URLs", () => {
+    const input = "[click](vbscript:MsgBox(1))";
+    const result = renderMarkdown(input);
+    expect(result).not.toContain("vbscript:");
+    expect(result).toContain('href="#"');
+  });
+
+  it("escapes quotes in href to prevent attribute breakout", () => {
+    const input = '[click](https://example.com" onclick="alert(1))';
+    const result = renderMarkdown(input);
+    // The quote in the URL should be escaped to &quot;, preventing actual attribute breakout.
+    // The resulting HTML has onclick=&quot; safely inside the href value, not as a real attribute.
+    expect(result).toContain("&quot;");
+    // Verify the a tag's href contains the full escaped URL (no breakout)
+    expect(result).toMatch(/href="https:\/\/example\.com&quot; onclick=&quot;alert\(1"/);
+  });
+
+  it("escapes < and > in href", () => {
+    const input = "[click](https://example.com/<script>)";
+    const result = renderMarkdown(input);
+    expect(result).not.toContain("<script>");
+    expect(result).toContain("&lt;script&gt;");
   });
 });

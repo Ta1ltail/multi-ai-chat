@@ -51,18 +51,60 @@ export function useChat(): UseChatReturn {
     setLoaded(true);
   }, []);
 
-  // Debounced save to localStorage
+  // Debounced save to localStorage with max-wait (throttle)
+  // Tokens arrive faster than 500ms apart during streaming, so a pure
+  // trailing debounce would never fire mid-stream. We force a save after
+  // 3 seconds regardless, and flush immediately on pagehide/visibilitychange.
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const lastSavedAtRef = useRef(0);
+  const conversationsRefForSave = useRef(conversations);
+  conversationsRefForSave.current = conversations;
+
+  const flushSave = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = null;
+    saveConversations(conversationsRefForSave.current);
+    lastSavedAtRef.current = Date.now();
+  }, []);
+
   useEffect(() => {
     if (!loaded) return;
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => {
-      saveConversations(conversations);
-    }, 500);
+
+    const now = Date.now();
+    const elapsed = now - lastSavedAtRef.current;
+    const MAX_WAIT_MS = 3000;
+    const DEBOUNCE_MS = 500;
+
+    if (elapsed >= MAX_WAIT_MS) {
+      // Max-wait exceeded: save immediately (throttle behavior)
+      flushSave();
+    } else {
+      // Still within debounce window: schedule, but cap at max-wait boundary
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      const remaining = MAX_WAIT_MS - elapsed;
+      saveTimerRef.current = setTimeout(flushSave, Math.min(DEBOUNCE_MS, remaining));
+    }
+
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [conversations, loaded]);
+  }, [conversations, loaded, flushSave]);
+
+  // Flush pending save on page hide / tab close / navigation
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === "hidden") flushSave();
+    }
+    function handlePageHide() {
+      flushSave();
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, [flushSave]);
 
   const activeConversation = conversations.find((c) => c.id === activeId);
   const messages = activeConversation?.messages ?? [];
@@ -198,7 +240,13 @@ export function useChat(): UseChatReturn {
         );
         throw error; // Re-throw so caller can show toast
       } finally {
-        setIsLoading(false);
+        // Only reset loading if this request is still the active one.
+        // If send #2 aborted send #1, send #1's finally must not clobber
+        // send #2's isLoading(true).
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+          setIsLoading(false);
+        }
         // Clean up empty assistant message if stream returned no content
         setConversations((prev) =>
           prev.map((c) =>

@@ -6,6 +6,32 @@
 
 import { getHighlightedCode } from "./highlight";
 
+/**
+ * Escape characters that are special inside HTML attribute values.
+ * Prevents attribute breakout (e.g. injecting `"` to escape href).
+ */
+function escapeAttr(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/**
+ * Validate URL scheme — only allow safe protocols.
+ * Blocks javascript:, data:, vbscript:, etc.
+ */
+function safeUrl(raw: string): string {
+  const trimmed = raw.trim();
+  // Allow fragment-only links
+  if (trimmed.startsWith("#")) return escapeAttr(trimmed);
+  // Allow safe schemes
+  if (/^(https?|mailto):/i.test(trimmed)) return escapeAttr(trimmed);
+  // Block everything else — fall back to #
+  return "#";
+}
+
 export function renderMarkdown(text: string): string {
   let html = text;
 
@@ -39,10 +65,11 @@ export function renderMarkdown(text: string): string {
   // Italic (* ... *)
   html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, "<em>$1</em>");
 
-  // Links [text](url)
+  // Links [text](url) — with URL scheme validation and attribute escaping
   html = html.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-accent underline decoration-accent/30 underline-offset-2 transition-colors hover:text-accent-hover hover:decoration-accent-hover">$1</a>',
+    (_, text: string, url: string) =>
+      `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer" class="text-accent underline decoration-accent/30 underline-offset-2 transition-colors hover:text-accent-hover hover:decoration-accent-hover">${text}</a>`,
   );
 
   // Unordered lists (- item)

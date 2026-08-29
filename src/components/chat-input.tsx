@@ -10,6 +10,7 @@ import {
 } from "react";
 
 const MAX_HEIGHT = 280;
+const MAX_MESSAGE_LENGTH = 16_000;
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -66,6 +67,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
             onInput={handleInput}
             placeholder="Message..."
             rows={1}
+            maxLength={MAX_MESSAGE_LENGTH}
             disabled={disabled}
             className="chat-input-scrollbar placeholder:text-foreground-tertiary text-foreground box-border max-h-70 min-h-0 w-full min-w-0 flex-1 resize-none self-center bg-transparent py-0.5 text-[15px] leading-relaxed focus:outline-none disabled:opacity-50"
           />

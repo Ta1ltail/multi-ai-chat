@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "./sidebar";
 
 interface AppShellProps {
@@ -24,11 +24,18 @@ export function AppShell({
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // On mobile, start sidebar closed to avoid overlay-on-load issue
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  }, []);
+
   return (
     <div className="flex h-dvh overflow-hidden bg-background">
       {/* Sidebar */}
       <div
-        className={`bg-surface flex shrink-0 flex-col overflow-hidden transition-[width] duration-200 ease-in-out ${
+        className={`relative z-30 bg-surface flex shrink-0 flex-col overflow-hidden transition-[width] duration-200 ease-in-out ${
           sidebarOpen ? "w-64" : "w-0"
         }`}
       >
