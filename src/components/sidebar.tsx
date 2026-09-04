@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "./button";
+import { BrandMark } from "./brand-mark";
 
 interface SidebarProps {
   conversations: Array<{ id: string; title: string; active?: boolean }>;
@@ -7,8 +8,6 @@ interface SidebarProps {
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
   onToggle: () => void;
-  theme: "light" | "dark";
-  onToggleTheme: () => void;
 }
 
 export function Sidebar({
@@ -17,8 +16,6 @@ export function Sidebar({
   onSelectConversation,
   onDeleteConversation,
   onToggle,
-  theme,
-  onToggleTheme,
 }: SidebarProps) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const deleteButtonRef = useRef<HTMLButtonElement>(null);
@@ -64,24 +61,28 @@ export function Sidebar({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <span className="text-sm font-semibold tracking-tight text-foreground">Multi AI Chat</span>
+      <div className="flex items-center justify-between px-3 pt-3 pb-2 md:px-4 md:pt-4">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <BrandMark className="h-7 w-7 rounded-lg" />
+          <span className="truncate text-[13.5px] font-semibold tracking-tight text-foreground">
+            Multi AI Chat
+          </span>
+        </div>
         <button
           onClick={onToggle}
           aria-label="Close sidebar"
           title="Close sidebar"
-          className="focus-ring text-foreground-tertiary hover:text-foreground inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-hover active:bg-active"
+          className="focus-ring inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-foreground-tertiary transition-colors duration-150 hover:bg-hover hover:text-foreground md:hidden"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <line x1="9" y1="3" x2="9" y2="21" />
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 6l12 12M18 6L6 18" />
           </svg>
         </button>
       </div>
 
       {/* New chat button */}
-      <div className="px-3 pb-3">
-        <Button variant="secondary" className="w-full justify-start" onClick={onNewChat}>
+      <div className="px-2 pb-2 md:px-3 md:pb-3">
+        <Button variant="secondary" className="w-full justify-start gap-2" onClick={onNewChat}>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <path d="M8 3v10M3 8h10" />
           </svg>
@@ -90,11 +91,13 @@ export function Sidebar({
       </div>
 
       {/* Conversation list */}
-      <nav className="custom-scrollbar flex-1 overflow-y-auto px-2 py-1" aria-label="Conversations">
+      <nav className="custom-scrollbar flex-1 overflow-y-auto px-1.5 py-1 md:px-2" aria-label="Conversations">
         {conversations.length === 0 ? (
-          <p className="px-2 py-6 text-center text-xs text-foreground-tertiary">No conversations yet</p>
+          <p className="px-2 py-10 text-center text-xs text-foreground-tertiary">
+            No conversations yet
+          </p>
         ) : (
-          <ul className="space-y-0.5" role="list">
+          <ul className="space-y-px" role="list">
             {conversations.map((conv) => (
               <li key={conv.id} className="group relative">
                 <button
@@ -103,13 +106,13 @@ export function Sidebar({
                     onSelectConversation(conv.id);
                   }}
                   aria-current={conv.active ? "page" : undefined}
-                  className={`focus-ring flex w-full items-center gap-2.5 truncate rounded-lg px-3 py-2 pr-8 text-left text-[13px] transition-colors duration-100 ${
+                  className={`focus-ring flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 pr-8 text-left text-[13px] transition-colors duration-100 ${
                     conv.active
                       ? "bg-accent-light font-medium text-foreground"
                       : "text-foreground-secondary hover:bg-hover hover:text-foreground"
                   }`}
                 >
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="shrink-0 opacity-40">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className={`shrink-0 ${conv.active ? "text-accent" : "opacity-40"}`}>
                     <path d="M2 4h12M2 8h8M2 12h10" />
                   </svg>
                   <span className="truncate">{conv.title}</span>
@@ -119,7 +122,7 @@ export function Sidebar({
                 {confirmDeleteId === conv.id ? (
                   <div
                     ref={popoverRef}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 rounded-md bg-surface shadow-sm border border-border-separator"
+                    className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-border-separator bg-surface p-0.5 shadow-lg"
                     onKeyDown={(e) => {
                       if (e.key === "Escape") setConfirmDeleteId(null);
                     }}
@@ -132,7 +135,7 @@ export function Sidebar({
                         setConfirmDeleteId(null);
                       }}
                       aria-label={`Confirm delete ${conv.title}`}
-                      className="focus-ring text-error hover:bg-error-bg inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium transition-colors duration-100"
+                      className="focus-ring inline-flex h-6 items-center gap-1 rounded-md px-2 text-[11px] font-medium text-error transition-colors duration-100 hover:bg-error-bg"
                     >
                       Delete
                     </button>
@@ -142,7 +145,7 @@ export function Sidebar({
                         setConfirmDeleteId(null);
                       }}
                       aria-label="Cancel delete"
-                      className="focus-ring text-foreground-tertiary hover:text-foreground hover:bg-hover inline-flex h-6 items-center rounded-md px-1.5 text-[11px] transition-colors duration-100"
+                      className="focus-ring inline-flex h-6 items-center rounded-md px-2 text-[11px] text-foreground-secondary transition-colors duration-100 hover:bg-hover hover:text-foreground"
                     >
                       Cancel
                     </button>
@@ -155,9 +158,9 @@ export function Sidebar({
                     }}
                     aria-label={`Delete ${conv.title}`}
                     title="Delete conversation"
-                    className={`focus-ring text-foreground-tertiary hover:text-error absolute right-1 top-1/2 -translate-y-1/2 inline-flex h-6 w-6 items-center justify-center rounded-md transition-all duration-100 hover:bg-error-bg ${
+                    className={`focus-ring text-foreground-tertiary hover:text-error absolute right-1.5 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md transition-all duration-100 hover:bg-error-bg ${
                       conv.active
-                        ? "opacity-60 hover:opacity-100 focus-visible:opacity-100"
+                        ? "opacity-50 hover:opacity-100 focus-visible:opacity-100"
                         : "opacity-0 group-hover:opacity-60 group-focus-within:opacity-60 hover:!opacity-100 focus-visible:opacity-100"
                     }`}
                   >
@@ -175,32 +178,10 @@ export function Sidebar({
       </nav>
 
       {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <p className="text-[11px] text-foreground-tertiary">v0.3.0</p>
-        <button
-          onClick={onToggleTheme}
-          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          className="focus-ring text-foreground-tertiary hover:text-foreground inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150 hover:bg-hover active:bg-active"
-        >
-          {theme === "dark" ? (
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="5" />
-              <line x1="12" y1="1" x2="12" y2="3" />
-              <line x1="12" y1="21" x2="12" y2="23" />
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-              <line x1="1" y1="12" x2="3" y2="12" />
-              <line x1="21" y1="12" x2="23" y2="12" />
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-            </svg>
-          ) : (
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-          )}
-        </button>
+      <div className="shrink-0 border-t border-border-separator/70 px-3 py-2.5 md:px-4">
+        <p className="text-center text-[11px] text-foreground-tertiary">
+          Multi AI Chat · v0.4.0
+        </p>
       </div>
     </div>
   );

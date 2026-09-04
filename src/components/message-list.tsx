@@ -37,8 +37,8 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
   }, [messages]);
 
   return (
-    <div ref={scrollRef} onScroll={handleScroll} className="custom-scrollbar flex-1 overflow-y-auto px-4 py-6">
-      <div role="log" aria-label="Chat messages" aria-live="polite" className="mx-auto flex max-w-3xl flex-col gap-5">
+    <div ref={scrollRef} onScroll={handleScroll} className="custom-scrollbar flex-1 overflow-y-auto px-3 py-6 md:px-4 md:py-8">
+      <div role="log" aria-label="Chat messages" aria-live="polite" className="mx-auto flex w-full max-w-3xl flex-col gap-6 md:gap-7">
         {messages.map((msg) => (
           <Message key={msg.id} role={msg.role} content={msg.content} />
         ))}

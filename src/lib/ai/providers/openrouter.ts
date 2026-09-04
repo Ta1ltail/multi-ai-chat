@@ -1,17 +1,13 @@
-import type { AIProvider, StreamOptions } from "./types";
+import type { AIProvider, ProviderEvent, StreamOptions } from "./types";
+import { buildApiMessages } from "./shared";
 
 export const openrouterProvider: AIProvider = {
   id: "openrouter",
   name: "OpenRouter",
 
-  async createStream(options: StreamOptions): Promise<ReadableStream> {
+  async createStream(options: StreamOptions): Promise<ReadableStream<ProviderEvent>> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) throw new Error("OPENROUTER_API_KEY is not set");
-
-    const apiMessages = [
-      { role: "system" as const, content: options.systemPrompt },
-      ...options.messages.map((msg) => ({ role: msg.role, content: msg.content })),
-    ];
 
     const timeoutSignal = AbortSignal.timeout(60_000);
     const signal = options.signal
@@ -22,7 +18,7 @@ export const openrouterProvider: AIProvider = {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: options.model, messages: apiMessages, stream: true,
+        model: options.model, messages: buildApiMessages(options.systemPrompt, options.messages), stream: true,
         max_tokens: options.maxTokens ?? 2048, temperature: options.temperature ?? 0.7, top_p: options.topP ?? 0.95,
       }),
       signal,
@@ -36,12 +32,12 @@ export const openrouterProvider: AIProvider = {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    const encoder = new TextEncoder();
 
-    return new ReadableStream({
+    return new ReadableStream<ProviderEvent>({
       async start(controller) {
         try {
           let buffer = "";
+          let doneSent = false;
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -54,16 +50,18 @@ export const openrouterProvider: AIProvider = {
               if (!trimmed || !trimmed.startsWith("data: ")) continue;
               const data = trimmed.slice(6);
               if (data === "[DONE]") {
-                controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+                controller.enqueue({ type: "done" });
+                doneSent = true;
                 continue;
               }
               let parsed: { choices?: Array<{ delta?: { content?: string | null } }>; error?: { message?: string } };
               try { parsed = JSON.parse(data); } catch { continue; }
               if (parsed.error) throw new Error(parsed.error.message ?? "OpenRouter stream error");
               const content = parsed.choices?.[0]?.delta?.content;
-              if (content) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`));
+              if (content) controller.enqueue({ type: "text", text: content });
             }
           }
+          if (!doneSent) controller.enqueue({ type: "done" });
           controller.close();
         } catch (error) {
           if (error instanceof DOMException && error.name === "AbortError") {
@@ -72,7 +70,7 @@ export const openrouterProvider: AIProvider = {
           }
           console.error("OpenRouter stream error:", error);
           const message = error instanceof Error ? error.message : "Stream failed";
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: message })}\n\n`));
+          controller.enqueue({ type: "error", message });
           controller.close();
         }
       },

@@ -1,7 +1,7 @@
 # PROJECT_AUDIT.md
 
-**Project:** multi-ai-chat v0.3.0
-**Date:** 2026-08-29 (updated)
+**Project:** multi-ai-chat v0.4.0
+**Date:** 2026-09-04 (updated)
 **Stack:** Next.js 15, React 19, Tailwind 4, TypeScript 5 (strict), Vitest
 
 ---
@@ -11,10 +11,12 @@
 ```
 User → page.tsx (useChat + useTheme)
   → POST /api/chat (route.ts)
-    → model === "auto" → router.ts → selectBestModel()
-    → model === specific → models.ts → getModelById()
-    → provider.createStream() → groq.ts | openrouter.ts
-    → Returns ReadableStream (SSE)
+    → model === "auto" → router.ts → selectBestModel() + buildFallbackCandidates()
+    → model === specific → models.ts → getModelById() + buildFallbackCandidates()
+    → fallback.ts → createStreamWithFallback() (provider fallback chain)
+      → provider.createStream() → groq.ts | openrouter.ts → ProviderEvent stream
+      → fallback switches candidate on pre-content failure
+    → shared.ts → toSSEStream() → Returns ReadableStream (SSE bytes)
   → sse.ts → readSSEStream()
   → use-chat.ts → setConversations() → streaming text appears
   → message.tsx → renderMarkdown() → sanitizeHTML() → dangerouslySetInnerHTML
@@ -53,16 +55,20 @@ src/
     ai/
       index.ts                — Server-only barrel (import "server-only")
       models.ts               — Client-safe model metadata + lookup functions
-      router.ts               — Auto-routing (priority-based model selection)
+      router.ts               — Auto-routing (priority-based selection + fallback ordering)
+      fallback.ts             — Provider fallback chain (lazy candidate switch, pre-content only)
       providers/
-        types.ts              — AIProvider, ModelConfig, StreamOptions (+ signal)
+        types.ts              — AIProvider, ModelConfig, StreamOptions, ProviderEvent
         index.ts              — Provider registry
+        shared.ts             — buildApiMessages + toSSEStream (SSE wire format)
         groq.ts               — Groq provider (abort signal polling)
         openrouter.ts         — OpenRouter provider (AbortSignal.any + 60s timeout)
   lib/__tests__/
     conversations.test.ts     — 9 tests (versioned format, legacy, validation)
+    fallback.test.ts          — 12 tests (candidate ordering, fallback chain)
     highlight.test.ts         — 12 tests
     markdown.test.ts          — 25 tests (code-block sentinels, URL escaping)
+    providers-shared.test.ts  — 7 tests (buildApiMessages, toSSEStream)
     router.test.ts            — 11 tests
     sanitize.test.ts          — 5 tests (mocked DOMPurify)
     sanitize-integration.test.ts — 17 tests (real DOMPurify in jsdom)
@@ -141,6 +147,17 @@ src/
 | L-5 | Toast discards error message | Surface `e.message` in toast |
 | L-16 | `.env.example` gitignored | `!.env.example` in `.gitignore` |
 
+### Phase 8 — Provider Fallback + Cleanup
+| ID | Issue | Fix |
+|----|-------|-----|
+| M-22 | No provider fallback chain | `fallback.ts` — eager first candidate, lazy rest; transparent switch on pre-content failure; `buildFallbackCandidates()` ordering |
+| L-17 | Duplicated `apiMessages` builder | `providers/shared.ts` — `buildApiMessages()` shared by both providers |
+| L-19 | Client hardcodes `"groq"` for unknown models | Client no longer sends `provider`; route derives it from the model config |
+| L-4 | Copy-indicator timers leak on unmount | `timersRef` set, cleared in unmount effect (`message.tsx`) |
+| L-10 | rAF not cancelled on unmount | Unmount cleanup in `chat-input.tsx` |
+| — | Client shows bare `API error: <status>` | `use-chat.ts` parses the response body and surfaces the server's message |
+| — | Providers hand-encode SSE bytes | Providers emit `ProviderEvent` streams; SSE encoding centralized in `toSSEStream()` |
+
 ### Cleanup
 - Removed all `.md` documentation files (docs/, AGENTS.md, README.md, PROJECT_AUDIT.md original)
 - Trimmed verbose comments across all source files
@@ -167,28 +184,25 @@ src/
 | File | Tests | Notes |
 |------|-------|-------|
 | `conversations.test.ts` | 9 | Versioned format, legacy, validation, quota |
+| `fallback.test.ts` | 12 | Candidate ordering, fallback chain |
 | `highlight.test.ts` | 12 | Escaping, aliases, unknown lang |
 | `markdown.test.ts` | 25 | Sentinels, URL escaping, scheme validation |
+| `providers-shared.test.ts` | 7 | buildApiMessages, toSSEStream |
 | `router.test.ts` | 11 | Provider detection, model selection |
 | `sanitize.test.ts` | 5 | Mocked DOMPurify |
 | `sanitize-integration.test.ts` | 17 | Real DOMPurify in jsdom |
 | `sse.test.ts` | 8 | Events, errors, DONE, malformed JSON, chunking |
-| **Total** | **87** | |
+| **Total** | **106** | |
 
 ## Remaining Items
 
 ### Low Priority
-- `L-4`: Copy-indicator timers not cleaned up on unmount
-- `L-10`: rAF not cancelled on unmount in chat-input
 - `L-15`: No virtualization for long conversations (defer until needed)
-- `L-17`: Provider layer could extract shared `apiMessages` builder
-- `L-19`: Client default provider hardcodes `"groq"` for unknown models
 
-### Medium Priority (Phase 8 roadmap)
-- Provider fallback chain (M-22)
-- Authentication + database (Phase 8)
+### Medium Priority (Phase 9 roadmap)
+- Authentication + database
 - Error monitoring (Sentry etc.)
 
 ---
 
-_Audit complete. 59 original findings resolved across 7 phases. 87 tests passing. All checks green._
+_Audit complete. 65 findings resolved across 8 phases. 106 tests passing. All checks green._

@@ -134,6 +134,24 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+::selection {
+  background-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* Chat message prose — long-form assistant content */
+.chat-prose {
+  overflow-wrap: break-word;
+  font-size: 15.5px;
+  line-height: 1.7;
+}
+
+@media (min-width: 768px) {
+  .chat-prose {
+    font-size: 16px;
+    line-height: 1.75;
+  }
+}
+
 /* ─── Focus ring ───────────────────────────────────── */
 
 .focus-ring {

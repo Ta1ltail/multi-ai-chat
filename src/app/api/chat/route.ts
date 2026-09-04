@@ -3,9 +3,11 @@ import { type NextRequest } from "next/server";
 export const maxDuration = 60;
 
 import {
-  getProviderOrThrow, getModelById, getDefaultModel, SYSTEM_PROMPT,
+  getModelById, getDefaultModel, SYSTEM_PROMPT,
   AUTO_MODEL_ID, getAvailableProviders, selectBestModel,
+  buildFallbackCandidates, createStreamWithFallback, toSSEStream,
 } from "@/lib/ai";
+import type { ModelConfig } from "@/lib/ai/providers/types";
 
 const MAX_MESSAGES = 100;
 const MAX_TOTAL_CONTENT_LENGTH = 128_000;
@@ -37,7 +39,7 @@ function validateMessages(
 
 export async function POST(req: NextRequest) {
   try {
-    let body: { messages?: unknown; provider?: string; model?: string };
+    let body: { messages?: unknown; model?: string };
     try {
       body = (await req.json()) as typeof body;
     } catch {
@@ -48,25 +50,26 @@ export async function POST(req: NextRequest) {
     if (!validation.valid) return Response.json({ error: validation.error }, { status: validation.status });
     const messages = validation.messages;
 
-    let resolvedModel: string;
-    let resolvedProvider: string;
+    let candidates: ModelConfig[];
 
     if (body.model === AUTO_MODEL_ID) {
-      const best = selectBestModel(getAvailableProviders());
-      resolvedModel = best.id;
-      resolvedProvider = best.provider;
+      const available = getAvailableProviders();
+      const best = selectBestModel(available);
+      candidates = buildFallbackCandidates(best, available);
     } else {
       const modelId = body.model ?? getDefaultModel().id;
       const modelConfig = getModelById(modelId);
       if (!modelConfig) return Response.json({ error: `Unknown model "${modelId}". Use "${AUTO_MODEL_ID}" or a valid model ID.` }, { status: 400 });
-      resolvedModel = modelConfig.id;
-      resolvedProvider = body.provider && modelConfig.provider === body.provider ? body.provider : modelConfig.provider;
+      candidates = buildFallbackCandidates(modelConfig, getAvailableProviders());
     }
 
-    const aiProvider = getProviderOrThrow(resolvedProvider);
-    const stream = await aiProvider.createStream({ model: resolvedModel, messages, systemPrompt: SYSTEM_PROMPT, signal: req.signal });
+    const events = await createStreamWithFallback(candidates, {
+      messages,
+      systemPrompt: SYSTEM_PROMPT,
+      signal: req.signal,
+    });
 
-    return new Response(stream, {
+    return new Response(toSSEStream(events), {
       headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "X-Accel-Buffering": "no" },
     });
   } catch (error) {
@@ -74,6 +77,7 @@ export async function POST(req: NextRequest) {
     const message = error instanceof Error ? error.message : "Internal server error";
     if (message.includes("No AI providers are configured")) return Response.json({ error: message }, { status: 503 });
     if (message.includes("Unknown provider")) return Response.json({ error: message }, { status: 400 });
+    if (message.startsWith("All providers failed")) return Response.json({ error: message }, { status: 502 });
     if (message.includes("API key") || message.includes("API error")) return Response.json({ error: message }, { status: 502 });
     return Response.json({ error: "Internal server error" }, { status: 500 });
   }

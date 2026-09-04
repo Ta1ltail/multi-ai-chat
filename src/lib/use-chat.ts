@@ -154,16 +154,22 @@ export function useChat(): UseChatReturn {
       }
 
       const apiMessages = windowedMessages.map((m) => ({ role: m.role, content: m.content }));
-      const providerId = modelConfig?.provider ?? "groq";
 
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, provider: providerId, model: modelId }),
+        body: JSON.stringify({ messages: apiMessages, model: modelId }),
         signal: controller.signal,
       });
 
-      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      if (!res.ok) {
+        let message = `API error: ${res.status}`;
+        try {
+          const data = (await res.json()) as { error?: unknown };
+          if (typeof data.error === "string" && data.error) message = data.error;
+        } catch { /* response had no JSON body */ }
+        throw new Error(message);
+      }
 
       let fullText = "";
       let pendingText = "";

@@ -16,6 +16,16 @@ export const Message = memo(function Message({ role, content, loading }: Message
   const isUser = role === "user";
   const [copied, setCopied] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  // Clear any pending copy-indicator timers on unmount
+  useEffect(() => {
+    const timers = timersRef.current;
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+      timers.clear();
+    };
+  }, []);
 
   const copyText = useCallback(async (text: string) => {
     try {
@@ -38,7 +48,8 @@ export const Message = memo(function Message({ role, content, loading }: Message
     const ok = await copyText(content);
     if (!ok) return;
     setCopied(true);
-    setTimeout(() => setCopied(false), COPY_RESET_MS);
+    const t = setTimeout(() => setCopied(false), COPY_RESET_MS);
+    timersRef.current.add(t);
   }, [content, copyText]);
 
   // Code block copy via event delegation (dangerouslySetInnerHTML)
@@ -59,10 +70,11 @@ export const Message = memo(function Message({ role, content, loading }: Message
         const checkIcon = btn.querySelector(".check-icon");
         copyIcon?.classList.add("hidden");
         checkIcon?.classList.remove("hidden");
-        setTimeout(() => {
+        const t = setTimeout(() => {
           copyIcon?.classList.remove("hidden");
           checkIcon?.classList.add("hidden");
         }, COPY_RESET_MS);
+        timersRef.current.add(t);
       });
     }
 
@@ -73,7 +85,7 @@ export const Message = memo(function Message({ role, content, loading }: Message
   if (loading) {
     return (
       <div className="message-animate-in flex justify-start">
-        <div className="flex items-center gap-1 py-3">
+        <div className="flex items-center gap-1.5 py-2.5">
           <span className="bg-foreground-tertiary inline-block h-1.5 w-1.5 animate-pulse rounded-full" />
           <span className="bg-foreground-tertiary inline-block h-1.5 w-1.5 animate-pulse rounded-full [animation-delay:150ms]" />
           <span className="bg-foreground-tertiary inline-block h-1.5 w-1.5 animate-pulse rounded-full [animation-delay:300ms]" />
@@ -88,7 +100,7 @@ export const Message = memo(function Message({ role, content, loading }: Message
     <button
       onClick={handleCopyMessage}
       aria-label={copied ? "Copied!" : "Copy message"}
-      className="focus-ring text-foreground-tertiary hover:text-foreground inline-flex h-6 w-6 items-center justify-center rounded-md transition-colors duration-100 hover:bg-hover"
+      className="focus-ring text-foreground-tertiary hover:text-foreground inline-flex h-6 w-6 items-center justify-center rounded-md opacity-70 transition-all duration-100 hover:opacity-100 hover:bg-hover"
       title={copied ? "Copied!" : "Copy message"}
     >
       {copied ? (
@@ -107,10 +119,10 @@ export const Message = memo(function Message({ role, content, loading }: Message
   if (isUser) {
     return (
       <div className="message-animate-in flex min-w-0 flex-col items-end">
-        <div className="bg-user-bubble text-user-bubble-text max-w-[80%] min-w-0 rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed md:max-w-[65%]">
+        <div className="bg-user-bubble text-user-bubble-text max-w-[85%] min-w-0 rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed md:max-w-[75%] md:px-5 md:py-3">
           <p className="wrap-break-word whitespace-pre-wrap">{content}</p>
         </div>
-        {copyButton && <div className="mt-1">{copyButton}</div>}
+        {copyButton && <div className="mt-1.5">{copyButton}</div>}
       </div>
     );
   }
@@ -119,10 +131,10 @@ export const Message = memo(function Message({ role, content, loading }: Message
     <div className="message-animate-in flex flex-col items-start">
       <div
         ref={contentRef}
-        className="text-foreground w-full min-w-0 text-[15px] leading-relaxed"
+        className="chat-prose text-foreground w-full min-w-0"
         dangerouslySetInnerHTML={{ __html: sanitizeHTML(renderMarkdown(content)) }}
       />
-      {copyButton && <div className="mt-1">{copyButton}</div>}
+      {copyButton && <div className="mt-2">{copyButton}</div>}
     </div>
   );
 });

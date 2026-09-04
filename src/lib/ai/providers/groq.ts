@@ -1,5 +1,6 @@
 import Groq from "groq-sdk";
-import type { AIProvider, StreamOptions } from "./types";
+import type { AIProvider, ProviderEvent, StreamOptions } from "./types";
+import { buildApiMessages } from "./shared";
 
 let _groq: Groq | null = null;
 function getGroq(): Groq {
@@ -7,24 +8,22 @@ function getGroq(): Groq {
   return _groq;
 }
 
-function buildSSEStream(
+function buildEventStream(
   stream: AsyncIterable<{ choices: Array<{ delta?: { content?: string | null } }> }>,
   signal?: AbortSignal,
-): ReadableStream {
-  const encoder = new TextEncoder();
-
-  return new ReadableStream({
+): ReadableStream<ProviderEvent> {
+  return new ReadableStream<ProviderEvent>({
     async start(controller) {
       try {
         for await (const chunk of stream) {
           if (signal?.aborted) break;
           const content = chunk.choices[0]?.delta?.content;
           if (content != null) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`));
+            controller.enqueue({ type: "text", text: content });
           }
         }
         if (!signal?.aborted) {
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.enqueue({ type: "done" });
         }
         controller.close();
       } catch (error) {
@@ -34,7 +33,7 @@ function buildSSEStream(
         }
         console.error("Groq stream error:", error);
         const message = error instanceof Error ? error.message : "Stream failed";
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: message })}\n\n`));
+        controller.enqueue({ type: "error", message });
         controller.close();
       }
     },
@@ -46,21 +45,16 @@ export const groqProvider: AIProvider = {
   id: "groq",
   name: "Groq",
 
-  async createStream(options: StreamOptions): Promise<ReadableStream> {
-    const apiMessages = [
-      { role: "system" as const, content: options.systemPrompt },
-      ...options.messages.map((msg) => ({ role: msg.role, content: msg.content })),
-    ];
-
+  async createStream(options: StreamOptions): Promise<ReadableStream<ProviderEvent>> {
     const stream = await getGroq().chat.completions.create({
       model: options.model,
-      messages: apiMessages,
+      messages: buildApiMessages(options.systemPrompt, options.messages),
       stream: true,
       max_tokens: options.maxTokens ?? 2048,
       temperature: options.temperature ?? 0.7,
       top_p: options.topP ?? 0.95,
     });
 
-    return buildSSEStream(stream, options.signal);
+    return buildEventStream(stream, options.signal);
   },
 };

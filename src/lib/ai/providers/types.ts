@@ -28,8 +28,18 @@ export interface StreamOptions {
   signal?: AbortSignal;
 }
 
+/**
+ * Structured stream events emitted by providers. The SSE wire format is
+ * applied once, at the route boundary (see toSSEStream), so providers and
+ * the fallback chain work with events rather than raw bytes.
+ */
+export type ProviderEvent =
+  | { type: "text"; text: string }
+  | { type: "done" }
+  | { type: "error"; message: string };
+
 export interface AIProvider {
   readonly id: string;
   readonly name: string;
-  createStream(options: StreamOptions): Promise<ReadableStream>;
+  createStream(options: StreamOptions): Promise<ReadableStream<ProviderEvent>>;
 }
