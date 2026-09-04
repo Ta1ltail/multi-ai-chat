@@ -138,18 +138,271 @@ body {
   background-color: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
-/* Chat message prose — long-form assistant content */
+/* ─── Chat message prose — long-form assistant content ──────── */
+/* Vertical rhythm is driven by collapsing margins: each block type carries
+   its own top/bottom margin, so spacing stays consistent no matter how the
+   response is composed, without gaps stacking up. */
+
 .chat-prose {
   overflow-wrap: break-word;
   font-size: 15.5px;
-  line-height: 1.7;
+  line-height: 1.72;
 }
 
 @media (min-width: 768px) {
   .chat-prose {
     font-size: 16px;
-    line-height: 1.75;
   }
+}
+
+.chat-prose strong {
+  font-weight: 600;
+}
+
+.chat-prose > :first-child {
+  margin-top: 0 !important;
+}
+
+/* Headings — real hierarchy, distinct sizes/weights */
+.chat-prose h1 {
+  font-size: 1.45em;
+  line-height: 1.3;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  margin: 1.2em 0 0.6em;
+}
+.chat-prose h2 {
+  font-size: 1.24em;
+  line-height: 1.35;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  margin: 1.35em 0 0.55em;
+}
+.chat-prose h3 {
+  font-size: 1.08em;
+  line-height: 1.4;
+  font-weight: 600;
+  margin: 1.3em 0 0.5em;
+}
+.chat-prose h4 {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 1.2em 0 0.45em;
+}
+.chat-prose h5 {
+  font-size: 0.95em;
+  font-weight: 600;
+  margin: 1.1em 0 0.45em;
+}
+.chat-prose h6 {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--foreground-secondary);
+  margin: 1.1em 0 0.4em;
+}
+
+/* Paragraphs */
+.chat-prose p {
+  margin: 0.55em 0;
+}
+
+/* Links */
+.chat-prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  text-underline-offset: 2px;
+  transition: color 120ms ease;
+}
+.chat-prose a:hover {
+  color: var(--accent-hover);
+  text-decoration-color: currentColor;
+}
+
+/* Lists */
+.chat-prose ul {
+  list-style: disc;
+}
+.chat-prose ol {
+  list-style: decimal;
+}
+.chat-prose ul,
+.chat-prose ol {
+  margin: 0.6em 0;
+  padding-left: 1.5em;
+}
+.chat-prose li {
+  margin: 0.3em 0;
+  padding-left: 0.15em;
+}
+.chat-prose li::marker {
+  color: var(--foreground-tertiary);
+}
+.chat-prose li > ul,
+.chat-prose li > ol {
+  margin: 0.3em 0;
+}
+
+/* Blockquotes */
+.chat-prose blockquote {
+  margin: 1em 0;
+  padding: 0.4em 0 0.4em 1.1em;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  color: var(--foreground-secondary);
+}
+.chat-prose blockquote > :first-child {
+  margin-top: 0;
+}
+.chat-prose blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* Horizontal rule */
+.chat-prose hr {
+  margin: 1.6em 0;
+  border: 0;
+  border-top: 1px solid var(--border-input);
+  opacity: 0.7;
+}
+
+/* Tables */
+.chat-prose .md-table-scroll {
+  margin: 1.1em 0;
+  overflow-x: auto;
+  border: 1px solid var(--border-separator);
+  border-radius: 12px;
+}
+.chat-prose table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.875em;
+  line-height: 1.55;
+  min-width: 26rem;
+}
+.chat-prose th {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.55em 0.9em;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border-bottom: 1px solid var(--border-separator);
+  white-space: nowrap;
+}
+.chat-prose td {
+  padding: 0.55em 0.9em;
+  border-bottom: 1px solid var(--border-separator);
+  vertical-align: top;
+}
+.chat-prose tbody tr:last-child td {
+  border-bottom: 0;
+}
+.chat-prose tbody tr:hover td {
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
+}
+
+/* Inline code */
+.chat-prose code {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.86em;
+}
+.chat-prose .inline-code {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-separator);
+  border-radius: 6px;
+  padding: 0.1em 0.42em;
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+/* ─── Code blocks ─────────────────────────────────────── */
+
+.chat-prose .code-block {
+  margin: 1.15em 0;
+  overflow: hidden;
+  border: 1px solid var(--border-separator);
+  border-radius: 12px;
+  background: var(--surface-elevated);
+}
+
+.chat-prose .code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 2rem;
+  padding: 0.2rem 0.5rem 0.2rem 0.9rem;
+  background: color-mix(in srgb, var(--foreground) 4%, var(--surface-elevated));
+  border-bottom: 1px solid var(--border-separator);
+}
+
+.code-block-lang {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--foreground-tertiary);
+}
+
+.copy-code-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  height: 1.6rem;
+  padding: 0 0.5rem;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--foreground-tertiary);
+  transition: color 120ms ease, background-color 120ms ease;
+}
+.copy-code-btn:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+}
+
+.chat-prose .code-block pre {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.65;
+  tab-size: 4;
+  -webkit-overflow-scrolling: touch;
+}
+.chat-prose .code-block pre code {
+  font-size: inherit;
+  line-height: inherit;
+  color: var(--foreground);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-weight: 400;
+}
+
+/* Horizontal scrollbar inside code blocks / tables */
+.chat-prose .code-block pre::-webkit-scrollbar,
+.chat-prose .md-table-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+.chat-prose .code-block pre::-webkit-scrollbar-track,
+.chat-prose .md-table-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-prose .code-block pre::-webkit-scrollbar-thumb,
+.chat-prose .md-table-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--foreground-tertiary) 45%, transparent);
+  border-radius: 100px;
+}
+.chat-prose .code-block pre {
+  scrollbar-width: thin;
+  scrollbar-color: var(--active) transparent;
 }
 
 /* ─── Focus ring ───────────────────────────────────── */
@@ -231,103 +484,91 @@ body {
 }
 
 /* ─── Syntax highlighting — Light mode ─────────────── */
+/* Distinct, muted token hues: comments are green, keywords purple/red,
+   strings warm, numbers/keys blue — readable on both themes, never neon. */
 
 .hljs-comment {
-  color: #7d8490;
+  color: #4f7a3e;
   font-style: italic;
 }
-
-.hljs-string {
-  color: #059669;
-}
-
 .hljs-keyword {
-  color: #7c3aed;
+  color: #cf222e;
   font-weight: 500;
 }
-
+.hljs-string {
+  color: #0a3069;
+}
 .hljs-number {
-  color: #d97706;
+  color: #0550ae;
 }
-
 .hljs-type {
-  color: #2563eb;
+  color: #8250df;
 }
-
+.hljs-function {
+  color: #953800;
+}
 .hljs-variable {
-  color: #dc2626;
+  color: #0969da;
 }
-
-.hljs-decorator {
-  color: #d97706;
+.hljs-property {
+  color: #116329;
 }
-
-.hljs-tag {
-  color: #dc2626;
-}
-
 .hljs-attribute {
+  color: #8250df;
+}
+.hljs-tag {
+  color: #0550ae;
+}
+.hljs-key {
+  color: #116329;
+}
+.hljs-decorator {
   color: #7c3aed;
 }
-
-.hljs-key {
-  color: #2563eb;
-}
-
-.hljs-arrow {
-  color: #7d8490;
-}
-
 .hljs-operator {
-  color: #7d8490;
+  color: #57606a;
 }
 
 /* ─── Syntax highlighting — Dark mode ──────────────── */
+/* VSCode Dark+-inspired: muted so long code stays comfortable to read. */
 
 html.dark .hljs-comment {
-  color: #7a8290;
+  color: #6a9955;
+  font-style: italic;
 }
-
-html.dark .hljs-string {
-  color: #34d399;
-}
-
 html.dark .hljs-keyword {
-  color: #a78bfa;
+  color: #c586c0;
 }
-
+html.dark .hljs-string {
+  color: #ce9178;
+}
 html.dark .hljs-number {
-  color: #fbbf24;
+  color: #b5cea8;
 }
-
 html.dark .hljs-type {
-  color: #60a5fa;
+  color: #4ec9b0;
 }
-
+html.dark .hljs-function {
+  color: #dcdcaa;
+}
 html.dark .hljs-variable {
-  color: #f87171;
+  color: #9cdcfe;
 }
-
-html.dark .hljs-decorator {
-  color: #fbbf24;
+html.dark .hljs-property {
+  color: #9cdcfe;
 }
-
-html.dark .hljs-tag {
-  color: #f87171;
-}
-
 html.dark .hljs-attribute {
-  color: #a78bfa;
+  color: #9cdcfe;
 }
-
+html.dark .hljs-tag {
+  color: #569cd6;
+}
 html.dark .hljs-key {
-  color: #60a5fa;
+  color: #9cdcfe;
 }
-
-html.dark .hljs-arrow {
-  color: #7a8290;
+html.dark .hljs-decorator {
+  color: #dcdcaa;
 }
-
 html.dark .hljs-operator {
-  color: #7a8290;
+  color: #8b949e;
 }

@@ -44,43 +44,55 @@ export const Message = memo(function Message({ role, content, loading }: Message
     }
   }, []);
 
+  const resetAfter = useCallback(
+    (fn: () => void) => {
+      const t = setTimeout(fn, COPY_RESET_MS);
+      timersRef.current.add(t);
+    },
+    [],
+  );
+
   const handleCopyMessage = useCallback(async () => {
     const ok = await copyText(content);
     if (!ok) return;
     setCopied(true);
-    const t = setTimeout(() => setCopied(false), COPY_RESET_MS);
-    timersRef.current.add(t);
-  }, [content, copyText]);
+    resetAfter(() => setCopied(false));
+  }, [content, copyText, resetAfter]);
 
-  // Code block copy via event delegation (dangerouslySetInnerHTML)
+  // Code block copy via event delegation (dangerouslySetInnerHTML).
+  // Each fence renders exactly one `.copy-code-btn` inside its header.
   useEffect(() => {
     const container = contentRef.current;
     if (!container) return;
+    const root = container;
 
     function handleClick(e: MouseEvent) {
       const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".copy-code-btn");
-      if (!btn || !container?.contains(btn)) return;
+      if (!btn || !root.contains(btn)) return;
 
-      const codeEl = btn.closest(".code-block-wrapper")?.querySelector("code");
+      const block = btn.closest<HTMLElement>(".code-block");
+      const codeEl = block?.querySelector("code");
       if (!codeEl) return;
 
       copyText(codeEl.textContent ?? "").then((ok) => {
         if (!ok) return;
-        const copyIcon = btn.querySelector(".copy-icon");
-        const checkIcon = btn.querySelector(".check-icon");
+        const label = btn.querySelector<HTMLElement>(".copy-label");
+        const copyIcon = btn.querySelector<HTMLElement>(".copy-icon");
+        const checkIcon = btn.querySelector<HTMLElement>(".check-icon");
+        if (label) label.textContent = "Copied!";
         copyIcon?.classList.add("hidden");
         checkIcon?.classList.remove("hidden");
-        const t = setTimeout(() => {
+        resetAfter(() => {
+          if (label) label.textContent = "Copy";
           copyIcon?.classList.remove("hidden");
           checkIcon?.classList.add("hidden");
-        }, COPY_RESET_MS);
-        timersRef.current.add(t);
+        });
       });
     }
 
     container.addEventListener("click", handleClick);
     return () => container.removeEventListener("click", handleClick);
-  }, [content, copyText]);
+  }, [content, copyText, resetAfter]);
 
   if (loading) {
     return (
@@ -94,35 +106,12 @@ export const Message = memo(function Message({ role, content, loading }: Message
     );
   }
 
-  const showMessageCopy = Boolean(content);
-
-  const copyButton = showMessageCopy ? (
-    <button
-      onClick={handleCopyMessage}
-      aria-label={copied ? "Copied!" : "Copy message"}
-      className="focus-ring text-foreground-tertiary hover:text-foreground inline-flex h-6 w-6 items-center justify-center rounded-md opacity-70 transition-all duration-100 hover:opacity-100 hover:bg-hover"
-      title={copied ? "Copied!" : "Copy message"}
-    >
-      {copied ? (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 6L9 17l-5-5" />
-        </svg>
-      ) : (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-        </svg>
-      )}
-    </button>
-  ) : null;
-
   if (isUser) {
     return (
       <div className="message-animate-in flex min-w-0 flex-col items-end">
-        <div className="bg-user-bubble text-user-bubble-text max-w-[85%] min-w-0 rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed md:max-w-[75%] md:px-5 md:py-3">
-          <p className="wrap-break-word whitespace-pre-wrap">{content}</p>
+        <div className="bg-user-bubble text-user-bubble-text max-w-[90%] min-w-0 whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed break-words md:max-w-[78%] md:px-5 md:py-3">
+          {content}
         </div>
-        {copyButton && <div className="mt-1.5">{copyButton}</div>}
       </div>
     );
   }
@@ -134,7 +123,26 @@ export const Message = memo(function Message({ role, content, loading }: Message
         className="chat-prose text-foreground w-full min-w-0"
         dangerouslySetInnerHTML={{ __html: sanitizeHTML(renderMarkdown(content)) }}
       />
-      {copyButton && <div className="mt-2">{copyButton}</div>}
+      {/* One copy button for the entire response, at the very end */}
+      <button
+        type="button"
+        onClick={handleCopyMessage}
+        aria-label={copied ? "Copied response" : "Copy response"}
+        title={copied ? "Copied!" : "Copy response"}
+        className="focus-ring text-foreground-tertiary hover:text-foreground mt-2.5 inline-flex h-7 items-center gap-1.5 rounded-lg border border-transparent px-2 text-xs font-medium transition-colors duration-100 hover:border-border-separator hover:bg-hover"
+      >
+        {copied ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+          </svg>
+        )}
+        {copied ? "Copied!" : "Copy response"}
+      </button>
     </div>
   );
 });

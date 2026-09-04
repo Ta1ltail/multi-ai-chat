@@ -7,11 +7,13 @@ import type { MessageData } from "@/types";
 interface MessageListProps {
   messages: MessageData[];
   isLoading?: boolean;
+  /** Extra bottom padding (px) reserved for the overlay composer. */
+  bottomPad?: number;
 }
 
 const SCROLL_THRESHOLD = 150;
 
-export function MessageList({ messages, isLoading }: MessageListProps) {
+export function MessageList({ messages, isLoading, bottomPad = 0 }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const shouldAutoScroll = useRef(true);
@@ -22,7 +24,9 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
     return el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD;
   }, []);
 
-  const handleScroll = useCallback(() => { shouldAutoScroll.current = isNearBottom(); }, [isNearBottom]);
+  const handleScroll = useCallback(() => {
+    shouldAutoScroll.current = isNearBottom();
+  }, [isNearBottom]);
 
   useEffect(() => {
     if (shouldAutoScroll.current) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,8 +41,14 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
   }, [messages]);
 
   return (
-    <div ref={scrollRef} onScroll={handleScroll} className="custom-scrollbar flex-1 overflow-y-auto px-3 py-6 md:px-4 md:py-8">
-      <div role="log" aria-label="Chat messages" aria-live="polite" className="mx-auto flex w-full max-w-3xl flex-col gap-6 md:gap-7">
+    <div ref={scrollRef} onScroll={handleScroll} className="custom-scrollbar flex-1 overflow-y-auto px-3 pt-4 md:px-4 md:pt-6">
+      <div
+        role="log"
+        aria-label="Chat messages"
+        aria-live="polite"
+        className="mx-auto flex w-full max-w-3xl flex-col gap-5 md:gap-6"
+        style={{ paddingBottom: `${bottomPad + 16}px` }}
+      >
         {messages.map((msg) => (
           <Message key={msg.id} role={msg.role} content={msg.content} />
         ))}

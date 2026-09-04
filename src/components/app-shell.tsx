@@ -23,11 +23,19 @@ function isMobileWidth(): boolean {
 }
 
 export function AppShell({
-  children, conversations, onNewChat, onSelectConversation,
-  onDeleteConversation, theme, onToggleTheme, selectedModel, onSelectModel, modelDisabled,
+  children,
+  conversations,
+  onNewChat,
+  onSelectConversation,
+  onDeleteConversation,
+  theme,
+  onToggleTheme,
+  selectedModel,
+  onSelectModel,
+  modelDisabled,
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(() => !isMobileWidth());
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => isMobileWidth());
 
   // Track viewport; auto-open on desktop, auto-close on mobile
   useEffect(() => {
@@ -45,17 +53,25 @@ export function AppShell({
   // Escape closes the mobile drawer
   useEffect(() => {
     if (!sidebarOpen || !isMobile) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setSidebarOpen(false); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [sidebarOpen, isMobile]);
 
   return (
     <div className="flex h-dvh overflow-hidden bg-background text-foreground">
-      {/* Sidebar: slide-in drawer on mobile, static rail on desktop */}
+      {/* Sidebar: slide-in drawer on mobile, collapsible rail on desktop */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 max-w-[85vw] flex-col overflow-hidden bg-surface shadow-xl transition-transform duration-200 ease-in-out md:static md:z-auto md:translate-x-0 md:border-r md:border-border-separator md:shadow-none ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 max-w-[85vw] flex-col overflow-hidden bg-surface shadow-xl transition-[width,transform] duration-200 ease-in-out md:static md:z-auto md:max-w-none md:shadow-none ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } ${
+          !isMobile
+            ? sidebarOpen
+              ? "md:translate-x-0 md:w-64 md:border-r md:border-border-separator"
+              : "md:translate-x-0 md:w-0"
+            : ""
         }`}
       >
         <Sidebar
@@ -84,6 +100,7 @@ export function AppShell({
         {/* Top bar */}
         <header className="z-10 flex h-12 shrink-0 items-center gap-1 border-b border-border-separator/60 bg-surface/60 px-2 backdrop-blur-sm md:h-14 md:gap-2 md:px-4">
           <div className="flex w-9 shrink-0 items-center">
+            {/* Mobile: open drawer */}
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
@@ -94,6 +111,29 @@ export function AppShell({
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
+            </button>
+            {/* Desktop: collapse / expand the rail */}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen((v) => !v)}
+              aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+              aria-expanded={sidebarOpen}
+              className="focus-ring hidden h-8 w-8 items-center justify-center rounded-lg text-foreground-tertiary transition-colors duration-150 hover:bg-hover hover:text-foreground md:inline-flex"
+            >
+              {sidebarOpen ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <path d="M9 4v16" />
+                  <path d="M14 10l-2 2 2 2" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <path d="M15 4v16" />
+                  <path d="M10 10l2 2-2 2" />
+                </svg>
+              )}
             </button>
           </div>
 

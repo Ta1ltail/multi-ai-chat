@@ -66,12 +66,12 @@ src/
   lib/__tests__/
     conversations.test.ts     — 9 tests (versioned format, legacy, validation)
     fallback.test.ts          — 12 tests (candidate ordering, fallback chain)
-    highlight.test.ts         — 12 tests
-    markdown.test.ts          — 25 tests (code-block sentinels, URL escaping)
+    highlight.test.ts         — 22 tests (token classes, aliases, unknown lang, label)
+    markdown.test.ts          — 39 tests (block parser, headings, tables, fences)
     providers-shared.test.ts  — 7 tests (buildApiMessages, toSSEStream)
     router.test.ts            — 11 tests
     sanitize.test.ts          — 5 tests (mocked DOMPurify)
-    sanitize-integration.test.ts — 17 tests (real DOMPurify in jsdom)
+    sanitize-integration.test.ts — 20 tests (real DOMPurify, full feature set)
     sse.test.ts               — 8 tests
 ```
 
@@ -158,6 +158,17 @@ src/
 | — | Client shows bare `API error: <status>` | `use-chat.ts` parses the response body and surfaces the server's message |
 | — | Providers hand-encode SSE bytes | Providers emit `ProviderEvent` streams; SSE encoding centralized in `toSSEStream()` |
 
+### Phase 9 — UI/UX Rework (v0.4.1)
+| ID | Issue | Fix |
+|----|-------|-----|
+| — | Headings render as literal `###` text (no hierarchy) | Full block parser in `markdown.ts`: real `h1`–`h6` levels, tables, blockquotes, `hr`, lists; system prompt guides `##`-first structure |
+| — | Inconsistent/missing syntax highlighting | Highlighter rewritten: 15+ languages, function/variable/property/decorator token classes, non-word language tags (`c++`, `c#`, `objective-c`), unclosed fences, indentation preserved (no `.trim()`) |
+| — | Inconsistent response spacing | CSS-driven vertical rhythm in `.chat-prose` (collapsing margins per block type) — consistent regardless of response length |
+| — | Too many copy buttons | Exactly one copy button per code block (in its header) + one labeled "Copy response" at the end of the assistant message; user bubbles no longer duplicate copies |
+| — | Composer growth breaks the page layout | Composer is now an overlay that scrolls internally (viewport-aware cap); chat reserves its height via `onHeightChange` + bottom padding — typing never reflows the page |
+| — | No desktop sidebar collapse | Animated width collapse (`w-64` ↔ `w-0`) with top-bar toggle; chat area expands naturally, no empty region |
+| — | Cramped sidebar | Primary accent "New chat" action, consistent `h-9` rows, truncation, hover-only delete, cleaner empty state |
+
 ### Cleanup
 - Removed all `.md` documentation files (docs/, AGENTS.md, README.md, PROJECT_AUDIT.md original)
 - Trimmed verbose comments across all source files
@@ -185,14 +196,14 @@ src/
 |------|-------|-------|
 | `conversations.test.ts` | 9 | Versioned format, legacy, validation, quota |
 | `fallback.test.ts` | 12 | Candidate ordering, fallback chain |
-| `highlight.test.ts` | 12 | Escaping, aliases, unknown lang |
-| `markdown.test.ts` | 25 | Sentinels, URL escaping, scheme validation |
+| `highlight.test.ts` | 22 | Token classes, aliases, unknown lang, labels |
+| `markdown.test.ts` | 39 | Block parser, headings, tables, fences, escaping |
 | `providers-shared.test.ts` | 7 | buildApiMessages, toSSEStream |
 | `router.test.ts` | 11 | Provider detection, model selection |
 | `sanitize.test.ts` | 5 | Mocked DOMPurify |
-| `sanitize-integration.test.ts` | 17 | Real DOMPurify in jsdom |
+| `sanitize-integration.test.ts` | 20 | Real DOMPurify, full feature set |
 | `sse.test.ts` | 8 | Events, errors, DONE, malformed JSON, chunking |
-| **Total** | **106** | |
+| **Total** | **133** | |
 
 ## Remaining Items
 
@@ -205,4 +216,4 @@ src/
 
 ---
 
-_Audit complete. 65 findings resolved across 8 phases. 106 tests passing. All checks green._
+_Audit complete. 65 findings resolved across 9 phases. 133 tests passing. All checks green._

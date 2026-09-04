@@ -2,6 +2,7 @@
 
 import { describe, it, expect } from "vitest";
 import { sanitizeHTML } from "../sanitize";
+import { renderMarkdown } from "../markdown";
 
 /**
  * Integration tests using real DOMPurify in a jsdom environment.
@@ -127,5 +128,59 @@ describe("sanitizeHTML (integration — real DOMPurify)", () => {
     expect(result).not.toContain("data-testid");
     expect(result).not.toContain("data-action");
     expect(result).toContain("text");
+  });
+
+  it("preserves the full markdown feature set through sanitize", () => {
+    const md = [
+      "# Big Title",
+      "",
+      "## Section",
+      "",
+      "Paragraph with `inline` and **bold**.\nSecond line.",
+      "",
+      "- item one",
+      "- item two",
+      "",
+      "> A quote",
+      "",
+      "| A | B |",
+      "|---|---|",
+      "| 1 | 2 |",
+      "",
+      "```javascript",
+      "const x = 1; // comment",
+      "```",
+      "",
+      "---",
+      "",
+      "Done.",
+    ].join("\n");
+    const result = sanitizeHTML(renderMarkdown(md));
+    expect(result).toContain("<h1>");
+    expect(result).toContain("<h2>");
+    expect(result).toContain("<blockquote>");
+    expect(result).toContain("<table>");
+    expect(result).toContain("<th>");
+    expect(result).toContain("<td>");
+    expect(result).toContain("<hr>");
+    expect(result).toContain("<ul>");
+    expect(result).toContain("code-block");
+    expect(result).toContain("copy-code-btn");
+    expect(result).toContain("inline-code");
+  });
+
+  it("renders ordered lists from markdown through sanitize", () => {
+    const result = sanitizeHTML(renderMarkdown("1. first\n2. second"));
+    expect(result).toContain("<ol");
+    expect(result).toContain("first");
+  });
+
+  it("keeps code text intact but strips any script payload", () => {
+    const md = "```html\n<script>alert(1)</script>\n```";
+    const result = sanitizeHTML(renderMarkdown(md));
+    // The <script> source never becomes a live element — it stays escaped text
+    expect(result).not.toContain("<script>");
+    expect(result).toContain("&lt;script");
+    expect(result).toContain("alert(1)");
   });
 });
