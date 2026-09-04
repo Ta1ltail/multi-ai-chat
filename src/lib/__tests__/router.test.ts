@@ -12,7 +12,7 @@ import { getAvailableProviders, selectBestModel } from "../ai/router";
 import { AUTO_MODEL_ID } from "../ai/models";
 
 describe("AUTO_MODEL_ID", () => {
-  it("equals \"auto\"", () => {
+  it('equals "auto"', () => {
     expect(AUTO_MODEL_ID).toBe("auto");
   });
 });

@@ -18,8 +18,12 @@ export const openrouterProvider: AIProvider = {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: options.model, messages: buildApiMessages(options.systemPrompt, options.messages), stream: true,
-        max_tokens: options.maxTokens ?? 2048, temperature: options.temperature ?? 0.7, top_p: options.topP ?? 0.95,
+        model: options.model,
+        messages: buildApiMessages(options.systemPrompt, options.messages),
+        stream: true,
+        max_tokens: options.maxTokens ?? 2048,
+        temperature: options.temperature ?? 0.7,
+        top_p: options.topP ?? 0.95,
       }),
       signal,
     });
@@ -54,8 +58,15 @@ export const openrouterProvider: AIProvider = {
                 doneSent = true;
                 continue;
               }
-              let parsed: { choices?: Array<{ delta?: { content?: string | null } }>; error?: { message?: string } };
-              try { parsed = JSON.parse(data); } catch { continue; }
+              let parsed: {
+                choices?: Array<{ delta?: { content?: string | null } }>;
+                error?: { message?: string };
+              };
+              try {
+                parsed = JSON.parse(data);
+              } catch {
+                continue;
+              }
               if (parsed.error) throw new Error(parsed.error.message ?? "OpenRouter stream error");
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) controller.enqueue({ type: "text", text: content });
@@ -74,7 +85,9 @@ export const openrouterProvider: AIProvider = {
           controller.close();
         }
       },
-      cancel() { reader.cancel().catch(() => {}); },
+      cancel() {
+        reader.cancel().catch(() => {});
+      },
     });
   },
 };

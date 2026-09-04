@@ -48,7 +48,11 @@ export function loadConversations(): Conversation[] {
     }
     return items.filter(isValidConversation) as Conversation[];
   } catch {
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
     return [];
   }
 }
@@ -71,7 +75,10 @@ export function saveConversations(conversations: Conversation[]): SaveResult {
   } catch {
     try {
       const half = trimmed.slice(0, Math.floor(trimmed.length / 2));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: STORAGE_VERSION, conversations: half }));
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version: STORAGE_VERSION, conversations: half }),
+      );
       return { ok: false, saved: half };
     } catch {
       return { ok: false };

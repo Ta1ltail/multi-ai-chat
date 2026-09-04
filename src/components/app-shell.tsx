@@ -61,16 +61,16 @@ export function AppShell({
   }, [sidebarOpen, isMobile]);
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-background text-foreground">
+    <div className="bg-background text-foreground flex h-dvh overflow-hidden">
       {/* Sidebar: slide-in drawer on mobile, collapsible rail on desktop */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 max-w-[85vw] flex-col overflow-hidden bg-surface shadow-xl transition-[width,transform] duration-200 ease-in-out md:static md:z-auto md:max-w-none md:shadow-none ${
+        className={`bg-surface fixed inset-y-0 left-0 z-40 flex w-64 max-w-[85vw] flex-col overflow-hidden shadow-xl transition-[width,transform] duration-200 ease-in-out md:static md:z-auto md:max-w-none md:shadow-none ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } ${
           !isMobile
             ? sidebarOpen
-              ? "md:translate-x-0 md:w-64 md:border-r md:border-border-separator"
-              : "md:translate-x-0 md:w-0"
+              ? "md:border-border-separator md:w-64 md:translate-x-0 md:border-r"
+              : "md:w-0 md:translate-x-0"
             : ""
         }`}
       >
@@ -98,7 +98,7 @@ export function AppShell({
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
-        <header className="z-10 flex h-12 shrink-0 items-center gap-1 border-b border-border-separator/60 bg-surface/60 px-2 backdrop-blur-sm md:h-14 md:gap-2 md:px-4">
+        <header className="border-border-separator/60 bg-surface/60 z-10 flex h-12 shrink-0 items-center gap-1 border-b px-2 backdrop-blur-sm md:h-14 md:gap-2 md:px-4">
           <div className="flex w-9 shrink-0 items-center">
             {/* Mobile: open drawer */}
             <button
@@ -106,9 +106,18 @@ export function AppShell({
               onClick={() => setSidebarOpen(true)}
               aria-label="Open sidebar"
               title="Open sidebar"
-              className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-lg text-foreground-tertiary transition-colors duration-150 hover:bg-hover hover:text-foreground md:hidden"
+              className="focus-ring text-foreground-tertiary hover:bg-hover hover:text-foreground inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 md:hidden"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
@@ -119,16 +128,34 @@ export function AppShell({
               aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
               title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
               aria-expanded={sidebarOpen}
-              className="focus-ring hidden h-8 w-8 items-center justify-center rounded-lg text-foreground-tertiary transition-colors duration-150 hover:bg-hover hover:text-foreground md:inline-flex"
+              className="focus-ring text-foreground-tertiary hover:bg-hover hover:text-foreground hidden h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 md:inline-flex"
             >
               {sidebarOpen ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <rect x="3" y="4" width="18" height="16" rx="2" />
                   <path d="M9 4v16" />
                   <path d="M14 10l-2 2 2 2" />
                 </svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <rect x="3" y="4" width="18" height="16" rx="2" />
                   <path d="M15 4v16" />
                   <path d="M10 10l2 2-2 2" />
@@ -138,7 +165,11 @@ export function AppShell({
           </div>
 
           <div className="flex min-w-0 flex-1 justify-center">
-            <ModelSelector selectedModel={selectedModel} onSelectModel={onSelectModel} disabled={modelDisabled} />
+            <ModelSelector
+              selectedModel={selectedModel}
+              onSelectModel={onSelectModel}
+              disabled={modelDisabled}
+            />
           </div>
 
           <div className="flex w-9 shrink-0 items-center justify-end">
@@ -146,10 +177,19 @@ export function AppShell({
               onClick={onToggleTheme}
               aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
               title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-lg text-foreground-tertiary transition-colors duration-150 hover:bg-hover hover:text-foreground"
+              className="focus-ring text-foreground-tertiary hover:bg-hover hover:text-foreground inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150"
             >
               {theme === "dark" ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <circle cx="12" cy="12" r="5" />
                   <line x1="12" y1="1" x2="12" y2="3" />
                   <line x1="12" y1="21" x2="12" y2="23" />
@@ -161,7 +201,16 @@ export function AppShell({
                   <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                 </svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                 </svg>
               )}

@@ -34,9 +34,7 @@ export interface StreamOptions {
  * the fallback chain work with events rather than raw bytes.
  */
 export type ProviderEvent =
-  | { type: "text"; text: string }
-  | { type: "done" }
-  | { type: "error"; message: string };
+  { type: "text"; text: string } | { type: "done" } | { type: "error"; message: string };
 
 export interface AIProvider {
   readonly id: string;

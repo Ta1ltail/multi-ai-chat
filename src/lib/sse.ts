@@ -47,7 +47,9 @@ export async function readSSEStream(
           const parsed = JSON.parse(data) as SSEEvent;
           if (parsed.error) throw new Error(parsed.error);
           if (parsed.text) onEvent(parsed);
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
     }
   } finally {

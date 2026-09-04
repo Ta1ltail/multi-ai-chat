@@ -31,7 +31,9 @@ export function toSSEStream(events: ReadableStream<ProviderEvent>): ReadableStre
           } else if (value.type === "done") {
             controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           } else if (value.type === "error") {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: value.message })}\n\n`));
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ error: value.message })}\n\n`),
+            );
           }
         }
       } finally {

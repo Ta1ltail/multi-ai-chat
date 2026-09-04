@@ -56,23 +56,38 @@ export function ModelSelector({ selectedModel, onSelectModel, disabled }: ModelS
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         className={`focus-ring flex h-8 items-center gap-2 rounded-full pr-2 pl-1.5 text-[13px] font-medium transition-colors duration-150 disabled:opacity-50 ${
-          isOpen ? "bg-hover text-foreground" : "text-foreground-secondary hover:bg-hover hover:text-foreground"
+          isOpen
+            ? "bg-hover text-foreground"
+            : "text-foreground-secondary hover:bg-hover hover:text-foreground"
         }`}
         title="Select model"
       >
-        <span aria-hidden="true" className="bg-accent/10 flex h-5 w-5 items-center justify-center rounded-md text-accent">
+        <span
+          aria-hidden="true"
+          className="bg-accent/10 text-accent flex h-5 w-5 items-center justify-center rounded-md"
+        >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2.5l2.35 7.15L21.5 12l-7.15 2.35L12 21.5l-2.35-7.15L2.5 12l7.15-2.35L12 2.5z" />
           </svg>
         </span>
         <span className="max-w-[160px] truncate md:max-w-[220px]">{label}</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 opacity-60 transition-transform duration-150 ${isOpen ? "rotate-180" : ""}`}>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`shrink-0 opacity-60 transition-transform duration-150 ${isOpen ? "rotate-180" : ""}`}
+        >
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute left-1/2 top-full z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-2xl border border-border-separator bg-surface shadow-xl shadow-black/5">
+        <div className="border-border-separator bg-surface absolute top-full left-1/2 z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-2xl border shadow-xl shadow-black/5">
           <div className="custom-scrollbar max-h-[min(24rem,70vh)] overflow-y-auto p-1.5">
             {/* Auto option */}
             <button
@@ -85,31 +100,43 @@ export function ModelSelector({ selectedModel, onSelectModel, disabled }: ModelS
               }}
               className={`focus-ring flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-[13px] transition-colors duration-100 ${
                 isAuto
-                  ? "bg-accent-light font-medium text-foreground"
+                  ? "bg-accent-light text-foreground font-medium"
                   : "text-foreground-secondary hover:bg-hover hover:text-foreground"
               }`}
             >
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-accent to-accent-hover text-white">
+              <span className="from-accent to-accent-hover grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gradient-to-br text-white">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2.5l2.35 7.15L21.5 12l-7.15 2.35L12 21.5l-2.35-7.15L2.5 12l7.15-2.35L12 2.5z" />
                 </svg>
               </span>
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate">{AUTO_LABEL}</span>
-                <span className="truncate text-[11px] font-normal text-foreground-tertiary">best available</span>
+                <span className="text-foreground-tertiary truncate text-[11px] font-normal">
+                  best available
+                </span>
               </span>
               {isAuto && (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-accent">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-accent shrink-0"
+                >
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
               )}
             </button>
 
-            <div className="mx-2 my-1.5 h-px bg-border-separator" aria-hidden="true" />
+            <div className="bg-border-separator mx-2 my-1.5 h-px" aria-hidden="true" />
 
             {providerConfigs.map((provider) => (
               <div key={provider.id}>
-                <div className="px-2.5 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wider text-foreground-tertiary">
+                <div className="text-foreground-tertiary px-2.5 pt-2 pb-1 text-[11px] font-medium tracking-wider uppercase">
                   {provider.name}
                 </div>
                 {provider.models.map((model: ModelConfig) => {
@@ -126,16 +153,26 @@ export function ModelSelector({ selectedModel, onSelectModel, disabled }: ModelS
                       }}
                       className={`focus-ring flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] transition-colors duration-100 ${
                         selected
-                          ? "bg-accent-light font-medium text-foreground"
+                          ? "bg-accent-light text-foreground font-medium"
                           : "text-foreground-secondary hover:bg-hover hover:text-foreground"
                       }`}
                     >
-                      <span className="w-7 shrink-0 text-center text-[10px] font-semibold uppercase tracking-wide text-foreground-tertiary">
+                      <span className="text-foreground-tertiary w-7 shrink-0 text-center text-[10px] font-semibold tracking-wide uppercase">
                         {provider.id === "groq" ? "GQ" : "OR"}
                       </span>
                       <span className="min-w-0 flex-1 truncate">{model.name}</span>
                       {selected && (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-accent">
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-accent shrink-0"
+                        >
                           <path d="M20 6L9 17l-5-5" />
                         </svg>
                       )}

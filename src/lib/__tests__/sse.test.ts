@@ -21,10 +21,7 @@ function sseResponse(lines: string[]): Response {
 describe("readSSEStream", () => {
   it("calls onEvent for each text event", async () => {
     const events: string[] = [];
-    const response = sseResponse([
-      "data: {\"text\":\"hello\"}\n\n",
-      "data: {\"text\":\"world\"}\n\n",
-    ]);
+    const response = sseResponse(['data: {"text":"hello"}\n\n', 'data: {"text":"world"}\n\n']);
 
     await readSSEStream(
       response,
@@ -39,10 +36,7 @@ describe("readSSEStream", () => {
 
   it("calls onDone when stream ends", async () => {
     let doneCalled = false;
-    const response = sseResponse([
-      "data: {\"text\":\"hi\"}\n\n",
-      "data: [DONE]\n\n",
-    ]);
+    const response = sseResponse(['data: {"text":"hi"}\n\n', "data: [DONE]\n\n"]);
 
     await readSSEStream(
       response,
@@ -56,9 +50,7 @@ describe("readSSEStream", () => {
   });
 
   it("throws when server sends an error event", async () => {
-    const response = sseResponse([
-      "data: {\"error\":\"Provider is down\"}\n\n",
-    ]);
+    const response = sseResponse(['data: {"error":"Provider is down"}\n\n']);
 
     await expect(
       readSSEStream(
@@ -71,10 +63,7 @@ describe("readSSEStream", () => {
 
   it("skips malformed JSON lines without throwing", async () => {
     const events: string[] = [];
-    const response = sseResponse([
-      "data: {not json}\n\n",
-      "data: {\"text\":\"valid\"}\n\n",
-    ]);
+    const response = sseResponse(["data: {not json}\n\n", 'data: {"text":"valid"}\n\n']);
 
     await readSSEStream(
       response,
@@ -89,11 +78,7 @@ describe("readSSEStream", () => {
 
   it("ignores lines without 'data: ' prefix", async () => {
     const events: string[] = [];
-    const response = sseResponse([
-      "event: ping\n\n",
-      "data: {\"text\":\"ok\"}\n\n",
-      ": heartbeat\n\n",
-    ]);
+    const response = sseResponse(["event: ping\n\n", 'data: {"text":"ok"}\n\n', ": heartbeat\n\n"]);
 
     await readSSEStream(
       response,
@@ -110,9 +95,9 @@ describe("readSSEStream", () => {
     const events: string[] = [];
     let doneCalled = false;
     const response = sseResponse([
-      "data: {\"text\":\"before\"}\n\n",
+      'data: {"text":"before"}\n\n',
       "data: [DONE]\n\n",
-      "data: {\"text\":\"after\"}\n\n",
+      'data: {"text":"after"}\n\n',
     ]);
 
     await readSSEStream(

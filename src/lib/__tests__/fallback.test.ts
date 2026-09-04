@@ -84,8 +84,11 @@ describe("createStreamWithFallback", () => {
 
   it("streams text and done from the first candidate", async () => {
     const p1: AIProvider = {
-      id: "p1", name: "p1",
-      createStream: vi.fn(async () => eventStream([{ type: "text", text: "hi" }, { type: "done" }])),
+      id: "p1",
+      name: "p1",
+      createStream: vi.fn(async () =>
+        eventStream([{ type: "text", text: "hi" }, { type: "done" }]),
+      ),
     };
     const providers: Record<string, AIProvider> = { p1 };
     const stream = await createStreamWithFallback([m1], baseOptions, (id) => providers[id]);
@@ -94,12 +97,18 @@ describe("createStreamWithFallback", () => {
 
   it("falls back when the first candidate fails to start", async () => {
     const p1: AIProvider = {
-      id: "p1", name: "p1",
-      createStream: vi.fn(async () => { throw new Error("API error (401)"); }),
+      id: "p1",
+      name: "p1",
+      createStream: vi.fn(async () => {
+        throw new Error("API error (401)");
+      }),
     };
     const p2: AIProvider = {
-      id: "p2", name: "p2",
-      createStream: vi.fn(async () => eventStream([{ type: "text", text: "from p2" }, { type: "done" }])),
+      id: "p2",
+      name: "p2",
+      createStream: vi.fn(async () =>
+        eventStream([{ type: "text", text: "from p2" }, { type: "done" }]),
+      ),
     };
     const providers: Record<string, AIProvider> = { p1, p2 };
     const stream = await createStreamWithFallback([m1, m2], baseOptions, (id) => providers[id]);
@@ -108,8 +117,11 @@ describe("createStreamWithFallback", () => {
 
   it("rejects when all candidates fail to start", async () => {
     const failing: AIProvider = {
-      id: "p1", name: "p1",
-      createStream: vi.fn(async () => { throw new Error("API key invalid"); }),
+      id: "p1",
+      name: "p1",
+      createStream: vi.fn(async () => {
+        throw new Error("API key invalid");
+      }),
     };
     const providers: Record<string, AIProvider> = { p1: failing, p2: failing };
     await expect(
@@ -119,12 +131,18 @@ describe("createStreamWithFallback", () => {
 
   it("switches mid-stream when a candidate errors before emitting content", async () => {
     const p1: AIProvider = {
-      id: "p1", name: "p1",
-      createStream: vi.fn(async () => eventStream([{ type: "error", message: "Provider is down" }])),
+      id: "p1",
+      name: "p1",
+      createStream: vi.fn(async () =>
+        eventStream([{ type: "error", message: "Provider is down" }]),
+      ),
     };
     const p2: AIProvider = {
-      id: "p2", name: "p2",
-      createStream: vi.fn(async () => eventStream([{ type: "text", text: "recovered" }, { type: "done" }])),
+      id: "p2",
+      name: "p2",
+      createStream: vi.fn(async () =>
+        eventStream([{ type: "text", text: "recovered" }, { type: "done" }]),
+      ),
     };
     const providers: Record<string, AIProvider> = { p1, p2 };
     const stream = await createStreamWithFallback([m1, m2], baseOptions, (id) => providers[id]);
@@ -133,22 +151,35 @@ describe("createStreamWithFallback", () => {
 
   it("propagates the error (no fallback) once content was already emitted", async () => {
     const p1: AIProvider = {
-      id: "p1", name: "p1",
-      createStream: vi.fn(async () => eventStream([{ type: "text", text: "partial" }, { type: "error", message: "mid failure" }])),
+      id: "p1",
+      name: "p1",
+      createStream: vi.fn(async () =>
+        eventStream([
+          { type: "text", text: "partial" },
+          { type: "error", message: "mid failure" },
+        ]),
+      ),
     };
     const p2: AIProvider = {
-      id: "p2", name: "p2",
-      createStream: vi.fn(async () => eventStream([{ type: "text", text: "never used" }, { type: "done" }])),
+      id: "p2",
+      name: "p2",
+      createStream: vi.fn(async () =>
+        eventStream([{ type: "text", text: "never used" }, { type: "done" }]),
+      ),
     };
     const providers: Record<string, AIProvider> = { p1, p2 };
     const stream = await createStreamWithFallback([m1, m2], baseOptions, (id) => providers[id]);
-    expect(await collect(stream)).toEqual([{ type: "text", text: "partial" }, { type: "error", message: "mid failure" }]);
+    expect(await collect(stream)).toEqual([
+      { type: "text", text: "partial" },
+      { type: "error", message: "mid failure" },
+    ]);
     expect(providers.p2.createStream).not.toHaveBeenCalled();
   });
 
   it("emits the error when the last candidate fails mid-stream", async () => {
     const p1: AIProvider = {
-      id: "p1", name: "p1",
+      id: "p1",
+      name: "p1",
       createStream: vi.fn(async () => eventStream([{ type: "error", message: "only failure" }])),
     };
     const providers: Record<string, AIProvider> = { p1 };
@@ -158,11 +189,15 @@ describe("createStreamWithFallback", () => {
 
   it("treats a clean stream end without a done event as completion", async () => {
     const p1: AIProvider = {
-      id: "p1", name: "p1",
+      id: "p1",
+      name: "p1",
       createStream: vi.fn(async () => eventStream([{ type: "text", text: "no done marker" }])),
     };
     const providers: Record<string, AIProvider> = { p1 };
     const stream = await createStreamWithFallback([m1], baseOptions, (id) => providers[id]);
-    expect(await collect(stream)).toEqual([{ type: "text", text: "no done marker" }, { type: "done" }]);
+    expect(await collect(stream)).toEqual([
+      { type: "text", text: "no done marker" },
+      { type: "done" },
+    ]);
   });
 });

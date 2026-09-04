@@ -26,7 +26,10 @@ export function selectBestModel(availableProviders: string[]): ModelConfig {
  * then every other model from available providers ordered by priority (then
  * context length).
  */
-export function buildFallbackCandidates(preferred: ModelConfig, availableProviders: string[]): ModelConfig[] {
+export function buildFallbackCandidates(
+  preferred: ModelConfig,
+  availableProviders: string[],
+): ModelConfig[] {
   const rest = allModels
     .filter((m) => m.id !== preferred.id && availableProviders.includes(m.provider))
     .sort((a, b) => b.priority - a.priority || b.contextLength - a.contextLength);

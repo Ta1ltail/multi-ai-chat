@@ -7,8 +7,8 @@ import { ChatInput } from "@/components/chat-input";
 import { Toast } from "@/components/toast";
 import { BrandMark } from "@/components/brand-mark";
 import { AUTO_MODEL_ID } from "@/lib/ai/models";
-import { useTheme } from "@/lib/use-theme";
-import { useChat } from "@/lib/use-chat";
+import { useTheme } from "@/hooks/use-theme";
+import { useChat } from "@/hooks/use-chat";
 import type { ToastState } from "@/types";
 
 const MODEL_STORAGE_KEY = "selectedModel";
@@ -39,7 +39,8 @@ const SUGGESTIONS: Suggestion[] = [
     icon: "✍️",
     title: "Draft a message",
     description: "A short, professional email",
-    prompt: "Draft a short, professional email asking a colleague for an update on a shared project.",
+    prompt:
+      "Draft a short, professional email asking a colleague for an update on a shared project.",
   },
   {
     icon: "🧠",
@@ -52,8 +53,16 @@ const SUGGESTIONS: Suggestion[] = [
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const {
-    conversations, activeId, messages, isLoading, loaded,
-    handleNewChat, handleSelectConversation, handleDeleteConversation, handleSend, handleStop,
+    conversations,
+    activeId,
+    messages,
+    isLoading,
+    loaded,
+    handleNewChat,
+    handleSelectConversation,
+    handleDeleteConversation,
+    handleSend,
+    handleStop,
   } = useChat();
 
   const [toasts, setToasts] = useState<ToastState[]>([]);
@@ -65,7 +74,9 @@ export default function Home() {
     try {
       const stored = localStorage.getItem(MODEL_STORAGE_KEY);
       if (stored) setSelectedModel(stored);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const addToast = useCallback((message: string, type: ToastState["type"] = "error") => {
@@ -79,16 +90,23 @@ export default function Home() {
 
   const handleSelectModel = useCallback((modelId: string) => {
     setSelectedModel(modelId);
-    try { localStorage.setItem(MODEL_STORAGE_KEY, modelId); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(MODEL_STORAGE_KEY, modelId);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
-  const handleSendWithModel = useCallback(async (content: string) => {
-    try {
-      await handleSend(content, selectedModel);
-    } catch (e) {
-      addToast(e instanceof Error ? e.message : "Failed to get response");
-    }
-  }, [handleSend, selectedModel, addToast]);
+  const handleSendWithModel = useCallback(
+    async (content: string) => {
+      try {
+        await handleSend(content, selectedModel);
+      } catch (e) {
+        addToast(e instanceof Error ? e.message : "Failed to get response");
+      }
+    },
+    [handleSend, selectedModel, addToast],
+  );
 
   const handleComposerResize = useCallback((height: number) => {
     setComposerHeight(height);
@@ -96,18 +114,41 @@ export default function Home() {
 
   return (
     <AppShell
-      conversations={conversations.map((c) => ({ id: c.id, title: c.title, active: c.id === activeId }))}
-      onNewChat={handleNewChat} onSelectConversation={handleSelectConversation}
-      onDeleteConversation={handleDeleteConversation} theme={theme} onToggleTheme={toggleTheme}
-      selectedModel={selectedModel} onSelectModel={handleSelectModel} modelDisabled={isLoading}
+      conversations={conversations.map((c) => ({
+        id: c.id,
+        title: c.title,
+        active: c.id === activeId,
+      }))}
+      onNewChat={handleNewChat}
+      onSelectConversation={handleSelectConversation}
+      onDeleteConversation={handleDeleteConversation}
+      theme={theme}
+      onToggleTheme={toggleTheme}
+      selectedModel={selectedModel}
+      onSelectModel={handleSelectModel}
+      modelDisabled={isLoading}
     >
       <div className="relative flex min-h-0 flex-1 flex-col">
         {!loaded ? (
           <div className="flex min-h-0 flex-1 items-center justify-center">
-            <div className="flex items-center gap-2 text-sm text-foreground-tertiary">
+            <div className="text-foreground-tertiary flex items-center gap-2 text-sm">
               <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="opacity-25" />
-                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="opacity-75" />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  className="opacity-25"
+                />
+                <path
+                  d="M12 2a10 10 0 0 1 10 10"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  className="opacity-75"
+                />
               </svg>
               Loading...
             </div>
@@ -119,10 +160,10 @@ export default function Home() {
                 <div className="mb-5 flex justify-center">
                   <BrandMark className="h-11 w-11 rounded-2xl shadow-md" />
                 </div>
-                <h1 className="text-[24px] font-semibold tracking-tight text-foreground md:text-[28px]">
+                <h1 className="text-foreground text-[24px] font-semibold tracking-tight md:text-[28px]">
                   How can I help you today?
                 </h1>
-                <p className="mt-2 text-sm text-foreground-tertiary">
+                <p className="text-foreground-tertiary mt-2 text-sm">
                   Pick a model in the top bar, or keep Auto for the best available.
                 </p>
 
@@ -133,19 +174,19 @@ export default function Home() {
                       type="button"
                       disabled={isLoading}
                       onClick={() => handleSendWithModel(suggestion.prompt)}
-                      className="focus-ring group flex items-start gap-3 rounded-2xl border border-border-separator bg-surface p-3.5 text-left transition-all duration-150 hover:border-border-input hover:shadow-sm active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50"
+                      className="focus-ring group border-border-separator bg-surface hover:border-border-input flex items-start gap-3 rounded-2xl border p-3.5 text-left transition-all duration-150 hover:shadow-sm active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50"
                     >
                       <span
                         aria-hidden="true"
-                        className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent-light text-base"
+                        className="bg-accent-light mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg text-base"
                       >
                         {suggestion.icon}
                       </span>
                       <span className="flex min-w-0 flex-col gap-0.5">
-                        <span className="text-[13px] font-medium text-foreground group-hover:text-foreground">
+                        <span className="text-foreground group-hover:text-foreground text-[13px] font-medium">
                           {suggestion.title}
                         </span>
-                        <span className="truncate text-xs text-foreground-tertiary">
+                        <span className="text-foreground-tertiary truncate text-xs">
                           {suggestion.description}
                         </span>
                       </span>
@@ -156,7 +197,12 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <MessageList key={activeId ?? "empty"} messages={messages} isLoading={isLoading} bottomPad={composerHeight} />
+          <MessageList
+            key={activeId ?? "empty"}
+            messages={messages}
+            isLoading={isLoading}
+            bottomPad={composerHeight}
+          />
         )}
 
         {/* Composer floats above the content; it never changes the page layout */}
@@ -171,7 +217,12 @@ export default function Home() {
       {toasts.length > 0 && (
         <div className="fixed top-16 right-3 z-50 flex flex-col gap-2 md:top-[4.25rem] md:right-4">
           {toasts.map((toast) => (
-            <Toast key={toast.id} message={toast.message} type={toast.type} onClose={() => removeToast(toast.id)} />
+            <Toast
+              key={toast.id}
+              message={toast.message}
+              type={toast.type}
+              onClose={() => removeToast(toast.id)}
+            />
           ))}
         </div>
       )}

@@ -32,7 +32,10 @@ export async function createStreamWithFallback(
   let initial: Attempt | null = null;
   for (const model of candidates) {
     try {
-      initial = { model, stream: await getProvider(model.provider).createStream({ ...options, model: model.id }) };
+      initial = {
+        model,
+        stream: await getProvider(model.provider).createStream({ ...options, model: model.id }),
+      };
       break;
     } catch (error) {
       const message = errorMessage(error);
@@ -62,7 +65,10 @@ function fallbackEventStream(
     while (restIndex < rest.length) {
       const model = rest[restIndex++];
       try {
-        return { model, stream: await getProvider(model.provider).createStream({ ...options, model: model.id }) };
+        return {
+          model,
+          stream: await getProvider(model.provider).createStream({ ...options, model: model.id }),
+        };
       } catch (error) {
         const message = errorMessage(error);
         failures.push(`${model.id}: ${message}`);
@@ -130,7 +136,10 @@ function fallbackEventStream(
         // Error before any content — try the next candidate.
         current = await nextAttempt();
         if (!current) {
-          controller.enqueue({ type: "error", message: failures[failures.length - 1] ?? "All models failed" });
+          controller.enqueue({
+            type: "error",
+            message: failures[failures.length - 1] ?? "All models failed",
+          });
           controller.close();
           return;
         }

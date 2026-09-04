@@ -1,14 +1,5 @@
 import { getHighlightedCode, getLanguageLabel } from "./highlight";
-
-/* ─── Escaping helpers ─────────────────────────────────────────── */
-
-function escapeText(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function escapeAttr(text: string): string {
-  return escapeText(text).replace(/"/g, "&quot;");
-}
+import { escapeHtml as escapeText, escapeAttr } from "./escape";
 
 function safeUrl(raw: string): string {
   const trimmed = raw.trim();
@@ -277,7 +268,8 @@ function renderSource(text: string, depth: number): string {
         j++;
       }
       // Drop a single trailing blank line added before the closing fence
-      if (closed && codeLines.length > 0 && codeLines[codeLines.length - 1].trim() === "") codeLines.pop();
+      if (closed && codeLines.length > 0 && codeLines[codeLines.length - 1].trim() === "")
+        codeLines.pop();
       const code = codeLines.join("\n");
       out.push(renderCodeBlock(code, fence.lang));
       i = j;
@@ -361,7 +353,12 @@ function renderSource(text: string, depth: number): string {
       const header = splitRow(line);
       const rows: string[][] = [];
       let j = i + 2;
-      while (j < lines.length && lines[j].includes("|") && !isHardBlockStart(lines[j]) && lines[j].trim() !== "") {
+      while (
+        j < lines.length &&
+        lines[j].includes("|") &&
+        !isHardBlockStart(lines[j]) &&
+        lines[j].trim() !== ""
+      ) {
         rows.push(splitRow(lines[j]));
         j++;
       }

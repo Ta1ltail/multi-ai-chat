@@ -59,11 +59,13 @@ describe("toSSEStream", () => {
 
   it("emits a complete SSE sequence for a full response", async () => {
     const out = await collect(
-      toSSEStream(eventStream([
-        { type: "text", text: "part 1" },
-        { type: "text", text: " part 2" },
-        { type: "done" },
-      ])),
+      toSSEStream(
+        eventStream([
+          { type: "text", text: "part 1" },
+          { type: "text", text: " part 2" },
+          { type: "done" },
+        ]),
+      ),
     );
     expect(out).toBe('data: {"text":"part 1"}\n\ndata: {"text":" part 2"}\n\ndata: [DONE]\n\n');
   });

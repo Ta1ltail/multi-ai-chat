@@ -72,11 +72,15 @@ export function useChat(): UseChatReturn {
       const remaining = MAX_WAIT_MS - elapsed;
       saveTimerRef.current = setTimeout(flushSave, Math.min(DEBOUNCE_MS, remaining));
     }
-    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
   }, [conversations, loaded, flushSave]);
 
   useEffect(() => {
-    const onHidden = () => { if (document.visibilityState === "hidden") flushSave(); };
+    const onHidden = () => {
+      if (document.visibilityState === "hidden") flushSave();
+    };
     const onPageHide = () => flushSave();
     document.addEventListener("visibilitychange", onHidden);
     window.addEventListener("pagehide", onPageHide);
@@ -89,14 +93,21 @@ export function useChat(): UseChatReturn {
   const activeConversation = conversations.find((c) => c.id === activeId);
   const messages = activeConversation?.messages ?? [];
 
-  useEffect(() => () => { abortRef.current?.abort(); }, []);
+  useEffect(
+    () => () => {
+      abortRef.current?.abort();
+    },
+    [],
+  );
 
   const handleNewChat = useCallback(() => {
     abortRef.current?.abort();
     setActiveId(null);
   }, []);
 
-  const handleSelectConversation = useCallback((id: string) => { setActiveId(id); }, []);
+  const handleSelectConversation = useCallback((id: string) => {
+    setActiveId(id);
+  }, []);
 
   const handleDeleteConversation = useCallback((id: string) => {
     if (activeIdRef.current === id) {
@@ -127,7 +138,8 @@ export function useChat(): UseChatReturn {
 
     setConversations((prev) => {
       const conv = prev.find((c) => c.id === convId);
-      const title = conv && conv.messages.length === 0 ? generateTitle(content) : conv?.title ?? "";
+      const title =
+        conv && conv.messages.length === 0 ? generateTitle(content) : (conv?.title ?? "");
       return prev.map((c) =>
         c.id === convId ? { ...c, title, messages: [...c.messages, userMsg, assistantMsg] } : c,
       );
@@ -138,8 +150,8 @@ export function useChat(): UseChatReturn {
     abortRef.current = controller;
 
     try {
-      const filteredHistory = [...historyMessages, userMsg].filter((m) =>
-        !(m.role === "assistant" && (m.content === "" || m.content.startsWith("Error: "))),
+      const filteredHistory = [...historyMessages, userMsg].filter(
+        (m) => !(m.role === "assistant" && (m.content === "" || m.content.startsWith("Error: "))),
       );
 
       const modelConfig = getModelById(modelId);
@@ -167,7 +179,9 @@ export function useChat(): UseChatReturn {
         try {
           const data = (await res.json()) as { error?: unknown };
           if (typeof data.error === "string" && data.error) message = data.error;
-        } catch { /* response had no JSON body */ }
+        } catch {
+          /* response had no JSON body */
+        }
         throw new Error(message);
       }
 
@@ -184,7 +198,12 @@ export function useChat(): UseChatReturn {
         setConversations((prev) =>
           prev.map((c) =>
             c.id === convId
-              ? { ...c, messages: c.messages.map((m) => m.id === assistantId ? { ...m, content: snapshot } : m) }
+              ? {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === assistantId ? { ...m, content: snapshot } : m,
+                  ),
+                }
               : c,
           ),
         );
@@ -198,7 +217,10 @@ export function useChat(): UseChatReturn {
             if (rafId === 0) rafId = requestAnimationFrame(flushPending);
           }
         },
-        () => { cancelAnimationFrame(rafId); flushPending(); },
+        () => {
+          cancelAnimationFrame(rafId);
+          flushPending();
+        },
       );
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
@@ -206,7 +228,12 @@ export function useChat(): UseChatReturn {
       setConversations((prev) =>
         prev.map((c) =>
           c.id === convId
-            ? { ...c, messages: c.messages.map((m) => m.id === assistantId ? { ...m, content: `Error: ${errorMsg}` } : m) }
+            ? {
+                ...c,
+                messages: c.messages.map((m) =>
+                  m.id === assistantId ? { ...m, content: `Error: ${errorMsg}` } : m,
+                ),
+              }
             : c,
         ),
       );
@@ -219,17 +246,30 @@ export function useChat(): UseChatReturn {
       setConversations((prev) =>
         prev.map((c) =>
           c.id === convId
-            ? { ...c, messages: c.messages.filter((m) => !(m.id === assistantId && m.content === "")) }
+            ? {
+                ...c,
+                messages: c.messages.filter((m) => !(m.id === assistantId && m.content === "")),
+              }
             : c,
         ),
       );
     }
   }, []);
 
-  const handleStop = useCallback(() => { abortRef.current?.abort(); }, []);
+  const handleStop = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
 
   return {
-    conversations, activeId, messages, isLoading, loaded,
-    handleNewChat, handleSelectConversation, handleDeleteConversation, handleSend, handleStop,
+    conversations,
+    activeId,
+    messages,
+    isLoading,
+    loaded,
+    handleNewChat,
+    handleSelectConversation,
+    handleDeleteConversation,
+    handleSend,
+    handleStop,
   };
 }

@@ -50,7 +50,8 @@ describe("sanitizeHTML (integration — real DOMPurify)", () => {
   });
 
   it("allows http and https links", () => {
-    const input = '<a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>';
+    const input =
+      '<a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>';
     const result = sanitizeHTML(input);
     expect(result).toContain("https://example.com");
     expect(result).toContain("target");
@@ -63,14 +64,16 @@ describe("sanitizeHTML (integration — real DOMPurify)", () => {
   });
 
   it("allows code blocks with classes", () => {
-    const input = '<div class="code-block-wrapper"><pre><code class="font-mono">const x = 1;</code></pre></div>';
+    const input =
+      '<div class="code-block-wrapper"><pre><code class="font-mono">const x = 1;</code></pre></div>';
     const result = sanitizeHTML(input);
     expect(result).toContain("code-block-wrapper");
     expect(result).toContain("font-mono");
   });
 
   it("allows copy button with SVG icons", () => {
-    const input = '<button type="button" class="copy-code-btn" title="Copy code"><svg width="13" height="13" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4"></path></svg></button>';
+    const input =
+      '<button type="button" class="copy-code-btn" title="Copy code"><svg width="13" height="13" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4"></path></svg></button>';
     const result = sanitizeHTML(input);
     expect(result).toContain("copy-code-btn");
     expect(result).toContain("<svg");
@@ -115,7 +118,8 @@ describe("sanitizeHTML (integration — real DOMPurify)", () => {
   });
 
   it("handles nested XSS attempts", () => {
-    const input = '<div><img src=x onerror="alert(1)"><script>alert(2)</script><a href="javascript:void(0)">link</a></div>';
+    const input =
+      '<div><img src=x onerror="alert(1)"><script>alert(2)</script><a href="javascript:void(0)">link</a></div>';
     const result = sanitizeHTML(input);
     expect(result).not.toContain("alert");
     expect(result).not.toContain("javascript:");

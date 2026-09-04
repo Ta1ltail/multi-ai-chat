@@ -47,9 +47,7 @@ describe("loadConversations", () => {
   });
 
   it("returns parsed conversations from versioned format", () => {
-    const conversations = [
-      { id: "1", title: "Test", messages: [], createdAt: Date.now() },
-    ];
+    const conversations = [{ id: "1", title: "Test", messages: [], createdAt: Date.now() }];
     store["conversations"] = JSON.stringify({ version: 1, conversations });
 
     const result = loadConversations();
@@ -57,9 +55,7 @@ describe("loadConversations", () => {
   });
 
   it("returns parsed conversations from legacy plain array format", () => {
-    const conversations = [
-      { id: "1", title: "Test", messages: [], createdAt: Date.now() },
-    ];
+    const conversations = [{ id: "1", title: "Test", messages: [], createdAt: Date.now() }];
     store["conversations"] = JSON.stringify(conversations);
 
     const result = loadConversations();
@@ -118,9 +114,7 @@ describe("loadConversations", () => {
 
 describe("saveConversations", () => {
   it("saves versioned conversations to localStorage", () => {
-    const conversations = [
-      { id: "1", title: "Test", messages: [], createdAt: Date.now() },
-    ];
+    const conversations = [{ id: "1", title: "Test", messages: [], createdAt: Date.now() }];
     saveConversations(conversations);
 
     expect(localStorageMock.setItem).toHaveBeenCalledTimes(1);

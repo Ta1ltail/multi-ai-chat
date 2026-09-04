@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
     <div className="flex h-dvh items-center justify-center">
-      <div className="flex items-center gap-2 text-sm text-foreground-tertiary">
+      <div className="text-foreground-tertiary flex items-center gap-2 text-sm">
         <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
           <circle
             cx="12"

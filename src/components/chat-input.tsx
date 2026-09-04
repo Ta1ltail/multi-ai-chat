@@ -1,6 +1,13 @@
 "use client";
 
-import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type FormEvent,
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 const MAX_MESSAGE_LENGTH = 16_000;
 
@@ -80,10 +87,15 @@ export function ChatInput({ onSend, onStop, disabled, onHeightChange }: ChatInpu
   const canSend = value.trim().length > 0 && !disabled;
 
   return (
-    <div ref={rootRef} className="pointer-events-none absolute inset-x-0 bottom-0 z-20" role="region" aria-label="Message composer">
+    <div
+      ref={rootRef}
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-20"
+      role="region"
+      aria-label="Message composer"
+    >
       <div className="pointer-events-auto mx-auto w-full max-w-3xl px-3 pb-2 md:px-4 md:pb-3">
         <form onSubmit={handleSubmit}>
-          <div className="bg-surface border-border-input shadow-md focus-within:shadow-lg focus-within:ring-accent/20 flex flex-col overflow-hidden rounded-[1.5rem] border transition-shadow duration-150 focus-within:border-accent/50 focus-within:ring-2">
+          <div className="bg-surface border-border-input focus-within:ring-accent/20 focus-within:border-accent/50 flex flex-col overflow-hidden rounded-[1.5rem] border shadow-md transition-shadow duration-150 focus-within:shadow-lg focus-within:ring-2">
             <textarea
               ref={textareaRef}
               value={value}
@@ -98,7 +110,7 @@ export function ChatInput({ onSend, onStop, disabled, onHeightChange }: ChatInpu
             />
 
             <div className="flex items-center gap-1.5 px-2.5 pt-0.5 pb-2.5 md:px-3.5">
-              <p className="hidden min-w-0 flex-1 select-none truncate pl-1.5 text-[11px] text-foreground-tertiary sm:block">
+              <p className="text-foreground-tertiary hidden min-w-0 flex-1 truncate pl-1.5 text-[11px] select-none sm:block">
                 Enter to send · Shift + Enter for a new line
               </p>
 
@@ -107,7 +119,7 @@ export function ChatInput({ onSend, onStop, disabled, onHeightChange }: ChatInpu
                   type="button"
                   onClick={onStop}
                   aria-label="Stop generating"
-                  className="focus-ring flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-separator bg-surface-elevated text-foreground transition-all duration-150 hover:bg-hover active:scale-95"
+                  className="focus-ring border-border-separator bg-surface-elevated text-foreground hover:bg-hover flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all duration-150 active:scale-95"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="6" y="6" width="12" height="12" rx="2" />
@@ -125,7 +137,13 @@ export function ChatInput({ onSend, onStop, disabled, onHeightChange }: ChatInpu
                   }`}
                 >
                   <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-                    <path d="M8 13V3M4.5 6.5 8 3l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M8 13V3M4.5 6.5 8 3l3.5 3.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </button>
               )}
@@ -133,7 +151,7 @@ export function ChatInput({ onSend, onStop, disabled, onHeightChange }: ChatInpu
           </div>
         </form>
 
-        <p className="mt-1.5 text-center text-[11px] leading-relaxed text-foreground-tertiary select-none">
+        <p className="text-foreground-tertiary mt-1.5 text-center text-[11px] leading-relaxed select-none">
           Multi AI Chat can make mistakes. Check important information.
         </p>
       </div>

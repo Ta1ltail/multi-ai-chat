@@ -41,7 +41,11 @@ export function MessageList({ messages, isLoading, bottomPad = 0 }: MessageListP
   }, [messages]);
 
   return (
-    <div ref={scrollRef} onScroll={handleScroll} className="custom-scrollbar flex-1 overflow-y-auto px-3 pt-4 md:px-4 md:pt-6">
+    <div
+      ref={scrollRef}
+      onScroll={handleScroll}
+      className="custom-scrollbar flex-1 overflow-y-auto px-3 pt-4 md:px-4 md:pt-6"
+    >
       <div
         role="log"
         aria-label="Chat messages"

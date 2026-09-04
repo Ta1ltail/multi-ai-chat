@@ -2,7 +2,13 @@ import type { AIProvider } from "./types";
 import { groqProvider } from "./groq";
 import { openrouterProvider } from "./openrouter";
 
-export type { AIProvider, ModelConfig, ProviderConfig, ProviderEvent, StreamOptions } from "./types";
+export type {
+  AIProvider,
+  ModelConfig,
+  ProviderConfig,
+  ProviderEvent,
+  StreamOptions,
+} from "./types";
 export { buildApiMessages, toSSEStream } from "./shared";
 
 const providers: Record<string, AIProvider> = {

@@ -194,7 +194,8 @@ describe("renderMarkdown", () => {
   // --- New renderer: heading hierarchy (no forced ###) ---
 
   it("renders #, ##, ### as real h1/h2/h3 with hierarchy", () => {
-    const input = "# Large Language Models\n\n## What the model sees\n\n### Why it feels intelligent\n\n#### Deep detail\n\nBody text";
+    const input =
+      "# Large Language Models\n\n## What the model sees\n\n### Why it feels intelligent\n\n#### Deep detail\n\nBody text";
     const result = renderMarkdown(input);
     expect(result).toContain("<h1>Large Language Models</h1>");
     expect(result).toContain("<h2>What the model sees</h2>");
@@ -269,7 +270,7 @@ describe("renderMarkdown", () => {
   });
 
   it("preserves code indentation exactly", () => {
-    const input = "```python\ndef hello():\n    return True\n    indented = \"yes\"\n```";
+    const input = '```python\ndef hello():\n    return True\n    indented = "yes"\n```';
     const result = renderMarkdown(input);
     // Inner spaces of code survive; leading 4-space indentation is not trimmed
     const text = textOf(result);
@@ -287,11 +288,12 @@ describe("renderMarkdown", () => {
   // --- Copy buttons: exactly one per code block, none elsewhere ---
 
   it("renders exactly one copy button per code block", () => {
-    const input = "```ts\nconst a = 1;\n```\n\nParagraph with `inline` code.\n\n```python\nprint(1)\n```";
+    const input =
+      "```ts\nconst a = 1;\n```\n\nParagraph with `inline` code.\n\n```python\nprint(1)\n```";
     const result = renderMarkdown(input);
     expect(result.match(/copy-code-btn/g) ?? []).toHaveLength(2);
     // Inline code is plain <code class="inline-code">, no copy button
-    expect(result).toContain("class=\"inline-code\"");
+    expect(result).toContain('class="inline-code"');
   });
 
   it("renders nothing for headings inside fenced code", () => {

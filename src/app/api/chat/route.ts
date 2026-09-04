@@ -3,37 +3,67 @@ import { type NextRequest } from "next/server";
 export const maxDuration = 60;
 
 import {
-  getModelById, getDefaultModel, SYSTEM_PROMPT,
-  AUTO_MODEL_ID, getAvailableProviders, selectBestModel,
-  buildFallbackCandidates, createStreamWithFallback, toSSEStream,
+  getModelById,
+  getDefaultModel,
+  SYSTEM_PROMPT,
+  AUTO_MODEL_ID,
+  getAvailableProviders,
+  selectBestModel,
+  buildFallbackCandidates,
+  createStreamWithFallback,
+  toSSEStream,
 } from "@/lib/ai";
 import type { ModelConfig } from "@/lib/ai/providers/types";
 
 const MAX_MESSAGES = 100;
 const MAX_TOTAL_CONTENT_LENGTH = 128_000;
 
-interface IncomingMessage { role?: unknown; content?: unknown; }
+interface IncomingMessage {
+  role?: unknown;
+  content?: unknown;
+}
 
 function validateMessages(
   messages: unknown,
-): { valid: false; error: string; status: number } | { valid: true; messages: Array<{ role: "user" | "assistant"; content: string }> } {
-  if (!messages || !Array.isArray(messages)) return { valid: false, error: "Messages array is required", status: 400 };
-  if (messages.length === 0) return { valid: false, error: "Messages array must not be empty", status: 400 };
-  if (messages.length > MAX_MESSAGES) return { valid: false, error: `Too many messages (maximum ${MAX_MESSAGES})`, status: 400 };
+):
+  | { valid: false; error: string; status: number }
+  | { valid: true; messages: Array<{ role: "user" | "assistant"; content: string }> } {
+  if (!messages || !Array.isArray(messages))
+    return { valid: false, error: "Messages array is required", status: 400 };
+  if (messages.length === 0)
+    return { valid: false, error: "Messages array must not be empty", status: 400 };
+  if (messages.length > MAX_MESSAGES)
+    return { valid: false, error: `Too many messages (maximum ${MAX_MESSAGES})`, status: 400 };
 
   const validated: Array<{ role: "user" | "assistant"; content: string }> = [];
   let totalContentLength = 0;
 
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i] as IncomingMessage;
-    if (typeof msg !== "object" || msg === null) return { valid: false, error: `Message at index ${i} must be an object`, status: 400 };
-    if (msg.role !== "user" && msg.role !== "assistant") return { valid: false, error: `Message at index ${i} has invalid role "${String(msg.role)}"`, status: 400 };
-    if (typeof msg.content !== "string" || msg.content.length === 0) return { valid: false, error: `Message at index ${i} must have non-empty string content`, status: 400 };
+    if (typeof msg !== "object" || msg === null)
+      return { valid: false, error: `Message at index ${i} must be an object`, status: 400 };
+    if (msg.role !== "user" && msg.role !== "assistant")
+      return {
+        valid: false,
+        error: `Message at index ${i} has invalid role "${String(msg.role)}"`,
+        status: 400,
+      };
+    if (typeof msg.content !== "string" || msg.content.length === 0)
+      return {
+        valid: false,
+        error: `Message at index ${i} must have non-empty string content`,
+        status: 400,
+      };
     totalContentLength += msg.content.length;
     validated.push({ role: msg.role, content: msg.content });
   }
 
-  if (totalContentLength > MAX_TOTAL_CONTENT_LENGTH) return { valid: false, error: `Total content too large (maximum ${MAX_TOTAL_CONTENT_LENGTH} chars)`, status: 400 };
+  if (totalContentLength > MAX_TOTAL_CONTENT_LENGTH)
+    return {
+      valid: false,
+      error: `Total content too large (maximum ${MAX_TOTAL_CONTENT_LENGTH} chars)`,
+      status: 400,
+    };
   return { valid: true, messages: validated };
 }
 
@@ -47,7 +77,8 @@ export async function POST(req: NextRequest) {
     }
 
     const validation = validateMessages(body.messages);
-    if (!validation.valid) return Response.json({ error: validation.error }, { status: validation.status });
+    if (!validation.valid)
+      return Response.json({ error: validation.error }, { status: validation.status });
     const messages = validation.messages;
 
     let candidates: ModelConfig[];
@@ -59,7 +90,11 @@ export async function POST(req: NextRequest) {
     } else {
       const modelId = body.model ?? getDefaultModel().id;
       const modelConfig = getModelById(modelId);
-      if (!modelConfig) return Response.json({ error: `Unknown model "${modelId}". Use "${AUTO_MODEL_ID}" or a valid model ID.` }, { status: 400 });
+      if (!modelConfig)
+        return Response.json(
+          { error: `Unknown model "${modelId}". Use "${AUTO_MODEL_ID}" or a valid model ID.` },
+          { status: 400 },
+        );
       candidates = buildFallbackCandidates(modelConfig, getAvailableProviders());
     }
 
@@ -70,15 +105,23 @@ export async function POST(req: NextRequest) {
     });
 
     return new Response(toSSEStream(events), {
-      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "X-Accel-Buffering": "no" },
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",
+      },
     });
   } catch (error) {
     console.error("API route error:", error);
     const message = error instanceof Error ? error.message : "Internal server error";
-    if (message.includes("No AI providers are configured")) return Response.json({ error: message }, { status: 503 });
-    if (message.includes("Unknown provider")) return Response.json({ error: message }, { status: 400 });
-    if (message.startsWith("All providers failed")) return Response.json({ error: message }, { status: 502 });
-    if (message.includes("API key") || message.includes("API error")) return Response.json({ error: message }, { status: 502 });
+    if (message.includes("No AI providers are configured"))
+      return Response.json({ error: message }, { status: 503 });
+    if (message.includes("Unknown provider"))
+      return Response.json({ error: message }, { status: 400 });
+    if (message.startsWith("All providers failed"))
+      return Response.json({ error: message }, { status: 502 });
+    if (message.includes("API key") || message.includes("API error"))
+      return Response.json({ error: message }, { status: 502 });
     return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

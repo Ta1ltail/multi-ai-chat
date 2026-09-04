@@ -37,7 +37,9 @@ function buildEventStream(
         controller.close();
       }
     },
-    cancel() { /* Groq AsyncIterable cleanup is GC-driven */ },
+    cancel() {
+      /* Groq AsyncIterable cleanup is GC-driven */
+    },
   });
 }
 

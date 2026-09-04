@@ -19,12 +19,18 @@ function getStoredTheme(): Theme | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === "light" || stored === "dark") return stored;
-  } catch { /* Safari private mode */ }
+  } catch {
+    /* Safari private mode */
+  }
   return null;
 }
 
 function storeTheme(theme: Theme): void {
-  try { localStorage.setItem(STORAGE_KEY, theme); } catch { /* Safari private mode */ }
+  try {
+    localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    /* Safari private mode */
+  }
 }
 
 function applyTheme(theme: Theme) {
